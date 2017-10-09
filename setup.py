@@ -9,5 +9,5 @@ setup(
         author='Infinity Cliff',
         author_email='kevin.williams@InfinityCliff.com',
         description='Implementation of Kivy',
-        install_requires=['kivy']
+        install_requires=['kivy', 'kivymd']
 )

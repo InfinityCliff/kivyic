@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from kivy.app import App
 from kivy.lang import Builder
-from kivy.factory import Factory
 
 from kivy.uix.screenmanager import Screen, SlideTransition, CardTransition
 from kivy.uix.gridlayout import GridLayout
@@ -24,7 +23,6 @@ from kivymd.menu import MDDropdownMenu
 from kivymd.theming import ThemableBehavior
 
 from kivyic import path
-from constants import *
 
 
 Builder.load_string('''
@@ -52,59 +50,6 @@ class ICSettingList(GridLayout):  # from MDList
     def remove_widget(self, widget):
         super(ICSettingList, self).remove_widget(widget)
         self.height -= widget.height
-
-class ICBaseSettingListItem(ThemableBehavior, FloatLayout): # from BaseListItem
-    """
-    Item on the Setting Screen.
-
-    Parameters:
-    setting_items:  Definition of settings
-
-    type: option, switch, menu
-    label: text label preceding item
-    description: test description following item
-    before: spacing before item, defaults to 0
-    after: spacing after item, defaults to 0
-    """
-    #settings = DictProperty()
-    #type_ = StringProperty()
-    #text = StringProperty()
-    #description = StringProperty()
-    #before = NumericProperty(0)
-    #after = NumericProperty(0)
-    layout_container_h = ObjectProperty()
-    title = StringProperty()
-    title_label = ObjectProperty()
-    description = StringProperty()
-    desc_label = ObjectProperty()
-    row_height = NumericProperty(dp(40))
-    text = StringProperty()
-    text_color = ListProperty(None)
-    font_style = OptionProperty('Body1', options=['Body1', 'Body2', 'Caption', 'Subhead', 'Title', 'Headline', 'Display1', 'Display2', 'Display3', 'Display4', 'Button', 'Icon'])
-    divider = OptionProperty('Full', options=['Full', 'Inset', None], allownone=True)
-
-    theme_text_color = StringProperty('Primary',allownone=True)
-    title_container = ObjectProperty()
-    _txt_left_pad = NumericProperty(dp(16))
-    _txt_top_pad = NumericProperty()
-    _txt_bot_pad = NumericProperty()
-    _txt_right_pad = NumericProperty(m_res.HORIZ_MARGINS)
-
-    def __init__(self, **kwargs):
-        #self.text = 'Setting'
-        super(ICBaseSettingListItem, self).__init__(**kwargs)
-
-    def build(self, set_dict):
-        pass
-        #self.title = set_dict.get('title', '')
-        #if self.title == '':
-        #    self.remove_widget(self.title_label)
-
-        #self.text = set_dict.get('text', '')
-
-        #self.description = set_dict.get('description', '')
-        #if self.description == '':
-        #    self.remove_widget(self.desc_label)
 
 
 class IRightBody:
@@ -180,6 +125,42 @@ class ICContainerSupport:  # from ContainerSupport
         return triggered
 
 
+class ICBaseSettingListItem(ThemableBehavior, FloatLayout): # from BaseListItem
+    """
+    Item on the Setting Screen.
+
+    Parameters:
+    setting_items:  Definition of settings
+
+    type: option, switch, menu
+    label: text label preceding item
+    description: test description following item
+    before: spacing before item, defaults to 0
+    after: spacing after item, defaults to 0
+    """
+    title = StringProperty()
+    description = StringProperty()
+    row_height = NumericProperty(dp(40))
+    text = StringProperty()
+    text_color = ListProperty(None)
+    font_style = OptionProperty('Body1', options=['Body1', 'Body2', 'Caption', 'Subhead', 'Title', 'Headline', 'Display1', 'Display2', 'Display3', 'Display4', 'Button', 'Icon'])
+    divider = OptionProperty('Full', options=['Full', 'Inset', None], allownone=True)
+
+    theme_text_color = StringProperty('Primary',allownone=True)
+    _txt_left_pad = NumericProperty(dp(16))
+    _txt_top_pad = NumericProperty()
+    _txt_bot_pad = NumericProperty()
+    _txt_right_pad = NumericProperty(m_res.HORIZ_MARGINS)
+
+    def __init__(self, **kwargs):
+        super(ICBaseSettingListItem, self).__init__(**kwargs)
+
+    def build(self, set_dict):
+        self.text = set_dict['text']
+        self.title = set_dict['title']
+        self.description = set_dict.get('description', '')
+
+
 class ICSettingLineSwitch(ICBaseSettingListItem, ICContainerSupport):  # from OneLineIconListItem & OneLineListItem
     """
     A one line setting item with a switch
@@ -195,7 +176,7 @@ class ICSettingLineSwitch(ICBaseSettingListItem, ICContainerSupport):  # from On
         self.ids['_right_container'].add_widget(MDSwitch())
 
     def build(self, set_dict):
-        self.text = set_dict['text']
+        super().build(set_dict)
 
 
 class ICSettingLineOption(ICContainerSupport, ICBaseSettingListItem):
@@ -214,8 +195,8 @@ class ICSettingLineOption(ICContainerSupport, ICBaseSettingListItem):
         self.ids['_right_container'].add_widget(self.option_button)
 
     def build(self, set_dict):
-        self.text = set_dict['text']
         self.add_options(set_dict['options'])
+        super().build(set_dict)
 
     def add_options(self, options):
         for option in options:
@@ -240,21 +221,14 @@ class ICSettingLineMenu(ICContainerSupport, ICBaseSettingListItem):
         self.ids['_right_container'].add_widget(self.button)
 
     def build(self, set_dict):
-        self.text = set_dict['text']
         if set_dict.get('screen', '') != '':
             self.screen = set_dict['screen']
             self.button.bind(on_release=self.change_screen)
+        super().build(set_dict)
 
     def change_screen(self, caller):
         print(self.screen)
         App.get_running_app().root.current = self.screen
-
-
-class ICSettingTitleDescription(GridLayout):
-
-    def build(self, set_dict):
-        self.ids['title'].text = set_dict['title']
-        self.ids['description'].text = set_dict['description']
 
 
 class ICSettingTitle(MDLabel):
@@ -300,24 +274,9 @@ class ICSettingScreen(Screen):
                 si = ICSettingLineMenu()
 
             si.build(set_dict)
+
             self.layout_container.add_widget(si)
 
-            if set_dict.get('title') != '':
-                self.add_title(set_dict, si)
-            #if set_dict.get('description', '') != '':
-            #    self.add_description(set_dict, si)
-
-    def add_title(self, set_dict, widget):
-# TODO - WORKING HERE - ADD BOXLAYOUT TITLE CONTAINER TO OTHER TWO SETTING TYPES
-        widget.title_container.add_widget(MDLabel(text=set_dict['title']))
-        widget.height += widget.title_container.height
-
-    def add_description(self, set_dict, widget):
-        desc = ICSettingDesc()
-        desc.ids['desc'].text = set_dict['description']
-        widget.height += desc.height
-        #desc.y = widget.y
-        widget.add_widget(desc)
 
     def done(self):
         self.manager.transition = CardTransition(mode='pop', direction='down')

@@ -9,5 +9,6 @@ Builder.load_string('''
 #: include ''' + path + '''/label.kv
 ''')
 
+
 class ICIconLabel(MDLabel):
     icon = StringProperty('checkbox-blank-circle')

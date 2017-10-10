@@ -66,28 +66,39 @@
 
 
 <ICSettingLineSwitch>
+    _right_container: _right_container
     BoxLayout:
         id: _right_container
         size_hint: None, None
         x: root.x + root.width - m_res.HORIZ_MARGINS - self.width
         y: root.y + root.height/2 - self.height/2
         size: dp(48), dp(48)
+        MDSwitch:
 
 <ICSettingLineOption>
+    _right_container: _right_container
+    option_button: option_button
     BoxLayout:
         id: _right_container
         size_hint: None, None
         x: root.x + root.width - m_res.HORIZ_MARGINS - self.width
         y: root.y + root.height/2 - self.height/2
         size: dp(48), dp(48)
+        MDFlatButton:
+            id: option_button
+            text: 'default'
+            on_release: root.open_option_menu(self)
 
 <ICSettingLineMenu>
+    _right_container: _right_container
     BoxLayout:
         id: _right_container
         size_hint: None, None
         x: root.x + root.width - m_res.HORIZ_MARGINS - self.width
         y: root.y + root.height/2 - self.height/2
         size: dp(48), dp(48)
+        MDIconButton:
+            icon: 'arrow-right'
 
 <ICSettingTitle>
     pos_hint: {'top': 0.95}
@@ -106,6 +117,7 @@
 <ICSettingScreen>:
     name: 'settingscreen'
     layout_container: layout_container
+    sv: sv
     GridLayout:
         cols: 1
         Toolbar:
@@ -116,6 +128,7 @@
             background_hue: '500'
             right_action_items: [['close-circle', lambda x: root.done()]]
         ScrollView:
+            id: sv
             do_scroll_x: False
             MDList:
                 id: layout_container

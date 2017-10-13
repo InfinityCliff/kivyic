@@ -1,24 +1,86 @@
 # -*- coding: utf-8 -*-
 import sys
+from kivy.app import App
 from kivy.animation import Animation
 from kivy.lang import Builder
-from kivy.metrics import dp
+from kivy.metrics import dp, sp
 
 
-from kivy.properties import NumericProperty, StringProperty, \
+from kivy.properties import NumericProperty, StringProperty, BooleanProperty,\
                             OptionProperty, ListProperty
 from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.behaviors import ButtonBehavior
+from kivy.uix.textinput import TextInput
 
+from kivy.uix.behaviors import ButtonBehavior
 from kivymd.theming import ThemableBehavior
+
 from kivymd.ripplebehavior import RectangularRippleBehavior
 from kivymd.list import ILeftBody, ILeftBodyTouch, IRightBody, IRightBodyTouch
+from kivymd.button import MDIconButton
+from kivymd.textfields import TextfieldLabel
+from kivymd.selectioncontrols import MDCheckbox
 
 import kivymd.material_resources as m_res
 
 Builder.load_string('''
- 
-    
+#: include dp kivy.metrics.dp
+<ICTextFieldPlain>:
+    a: dp(12)
+    canvas.before:
+        Clear
+        Color:
+            rgba: self.line_color_normal
+        Line:
+            points: self.x, self.y + dp(12), self.x + self.width, self.y + dp(12)
+            width: 1
+            dash_length: dp(3)
+            dash_offset: 2 if self.disabled else 0
+        Color:
+            rgba: self._current_line_color
+        Rectangle:
+            size: self._line_width, dp(2)
+            pos: self.center_x - (self._line_width / 2), self.y + dp(16)
+        Color:
+            rgba: self._current_error_color
+        Rectangle:
+            texture: self._msg_lbl.texture
+            size: self._msg_lbl.texture_size
+            pos: self.x, self.y
+        Color:
+            rgba: self._current_right_lbl_color
+        Rectangle:
+            texture: self._right_msg_lbl.texture
+            size: self._right_msg_lbl.texture_size
+            pos: self.width-self._right_msg_lbl.texture_size[0]+dp(45), self.y
+        Color:
+            rgba: (self._current_line_color if self.focus and not self.cursor_blink else (0, 0, 0, 0))
+        Rectangle:
+            pos: [int(x) for x in self.cursor_pos]
+            size: 1, -self.line_height
+        Color:
+            rgba: self._current_hint_text_color
+        Rectangle:
+            texture: self._hint_lbl.texture
+            size: self._hint_lbl.texture_size
+            pos: self.x, self.y + self.height - self._hint_y
+        Color:
+            rgba: self.disabled_foreground_color if self.disabled else \
+            (self.hint_text_color if not self.text and not self.focus else self.foreground_color)
+    canvas.after:
+        Color:
+            rgba: 0,0,1,.3
+        Rectangle:
+            size: self.size
+            pos: self.pos
+    font_name: 'Roboto'
+    foreground_color: app.theme_cls.text_color
+    font_size: sp(15)
+    bold: False
+    padding: 0, dp(16), 0, dp(7)
+    multiline: False
+    size_hint_y: None
+    height: self.minimum_height + dp(8)
+   
 <BaseTextInputItem>
     size_hint_y: None
     canvas:
@@ -35,10 +97,11 @@ Builder.load_string('''
         orientation: 'vertical'
         pos: root.pos
         #padding: root._txt_left_pad, root._txt_top_pad, root._txt_right_pad, root._txt_bot_pad
-        TextInput:
+        padding: root._txt_left_pad, 0, root._txt_right_pad, 0
+        ICTextFieldPlain:
             id: _lbl_primary
             text: root.text
-            padding: [5, 14]
+            #padding: [0, 0]
             font_style: root.font_style
             theme_text_color: root.theme_text_color
             text_color: root.text_color
@@ -117,10 +180,244 @@ Builder.load_string('''
 ''')
 
 
+class ICTextFieldPlain(ThemableBehavior, TextInput):
+    helper_text = StringProperty("This field is required")
+    helper_text_mode = OptionProperty('none', options=['none', 'on_error', 'persistent', 'on_focus'])
+
+    max_text_length = NumericProperty(None)
+    required = BooleanProperty(False)
+
+    color_mode = OptionProperty('primary', options=['primary', 'accent', 'custom'])
+    line_color_normal = ListProperty()
+    line_color_focus = ListProperty()
+    error_color = ListProperty()
+
+    error = BooleanProperty(False)
+    _text_len_error = BooleanProperty(False)
+
+    _hint_lbl_font_size = NumericProperty(sp(16))
+    _hint_y = NumericProperty(dp(38))
+    _line_width = NumericProperty(0)
+    _current_line_color = ListProperty([0.0, 0.0, 0.0, 0.0])
+    _current_error_color = ListProperty([0.0, 0.0, 0.0, 0.0])
+    _current_hint_text_color = ListProperty([0.0, 0.0, 0.0, 0.0])
+    _current_right_lbl_color = ListProperty([0.0, 0.0, 0.0, 0.0])
+
+    def __init__(self, **kwargs):
+        self._msg_lbl = TextfieldLabel(font_style='Caption',
+                                       halign='left',
+                                       valign='middle',
+                                       text=self.helper_text)
+
+        self._right_msg_lbl = TextfieldLabel(font_style='Caption',
+                                             halign='right',
+                                             valign='middle',
+                                             text="")
+
+        self._hint_lbl = TextfieldLabel(font_style='Subhead',
+                                        halign='left',
+                                        valign='middle')
+        super(ICTextFieldPlain, self).__init__(**kwargs)
+        self.line_color_normal = self.theme_cls.divider_color
+        self.line_color_focus = self.theme_cls.primary_color
+        self.error_color = self.theme_cls.error_color
+
+        self._current_hint_text_color = self.theme_cls.disabled_hint_text_color
+        self._current_line_color = self.theme_cls.primary_color
+
+        self.bind(helper_text=self._set_msg,
+                  hint_text=self._set_hint,
+                  _hint_lbl_font_size=self._hint_lbl.setter('font_size'),
+                  helper_text_mode=self._set_message_mode,
+                  max_text_length=self._set_max_text_length,
+                  text=self.on_text)
+        self.theme_cls.bind(primary_color=self._update_primary_color,
+                            theme_style=self._update_theme_style,
+                            accent_color=self._update_accent_color)
+        self.has_had_text = False
+
+    def _update_colors(self, color):
+        self.line_color_focus = color
+        if not self.error and not self._text_len_error:
+            self._current_line_color = color
+            if self.focus:
+                self._current_line_color = color
+
+    def _update_accent_color(self, *args):
+        if self.color_mode == "accent":
+            self._update_colors(self.theme_cls.accent_color)
+
+    def _update_primary_color(self, *args):
+        if self.color_mode == "primary":
+            self._update_colors(self.theme_cls.primary_color)
+
+    def _update_theme_style(self, *args):
+        self.line_color_normal = self.theme_cls.divider_color
+        if not any([self.error, self._text_len_error]):
+            if not self.focus:
+                self._current_hint_text_color = self.theme_cls.disabled_hint_text_color
+                self._current_right_lbl_color = self.theme_cls.disabled_hint_text_color
+                if self.helper_text_mode == "persistent":
+                    self._current_error_color = self.theme_cls.disabled_hint_text_color
+
+    def on_width(self, instance, width):
+        if any([self.focus, self.error, self._text_len_error]) and instance is not None:
+            self._line_width = width
+        self._msg_lbl.width = self.width
+        self._right_msg_lbl.width = self.width
+        self._hint_lbl.width = self.width
+
+    def on_focus(self, *args):
+        Animation.cancel_all(self, '_line_width', '_hint_y',
+                             '_hint_lbl_font_size')
+        if self.max_text_length is None:
+            max_text_length = sys.maxsize
+        else:
+            max_text_length = self.max_text_length
+        if len(self.text) > max_text_length or all([self.required, len(self.text) == 0, self.has_had_text]):
+            self._text_len_error = True
+        if self.error or all([self.max_text_length is not None and len(self.text) > self.max_text_length]):
+            has_error = True
+        else:
+            if all([self.required, len(self.text) == 0, self.has_had_text]):
+                has_error = True
+            else:
+                has_error = False
+
+        if self.focus:
+            self.has_had_text = True
+            Animation.cancel_all(self, '_line_width', '_hint_y',
+                                 '_hint_lbl_font_size')
+            if len(self.text) == 0:
+                Animation(_hint_y=dp(14),
+                          _hint_lbl_font_size=sp(12), duration=.2,
+                          t='out_quad').start(self)
+            Animation(_line_width=self.width, duration=.2, t='out_quad').start(self)
+            if has_error:
+                Animation(duration=.2, _current_hint_text_color=self.error_color,
+                          _current_right_lbl_color=self.error_color,
+                          _current_line_color=self.error_color).start(self)
+                if self.helper_text_mode == "on_error" and (self.error or self._text_len_error):
+                    Animation(duration=.2, _current_error_color=self.error_color).start(self)
+                elif self.helper_text_mode == "on_error" and not self.error and not self._text_len_error:
+                    Animation(duration=.2, _current_error_color=(0, 0, 0, 0)).start(self)
+                elif self.helper_text_mode == "persistent":
+                    Animation(duration=.2, _current_error_color=self.theme_cls.disabled_hint_text_color).start(self)
+                elif self.helper_text_mode == "on_focus":
+                    Animation(duration=.2, _current_error_color=self.theme_cls.disabled_hint_text_color).start(self)
+            else:
+                Animation(duration=.2, _current_hint_text_color=self.line_color_focus,
+                          _current_right_lbl_color=self.theme_cls.disabled_hint_text_color).start(self)
+                if self.helper_text_mode == "on_error":
+                    Animation(duration=.2, _current_error_color=(0, 0, 0, 0)).start(self)
+                if self.helper_text_mode == "persistent":
+                    Animation(duration=.2, _current_error_color=self.theme_cls.disabled_hint_text_color).start(self)
+                elif self.helper_text_mode == "on_focus":
+                    Animation(duration=.2, _current_error_color=self.theme_cls.disabled_hint_text_color).start(self)
+        else:
+            if len(self.text) == 0:
+                Animation(_hint_y=dp(38),
+                          _hint_lbl_font_size=sp(16), duration=.2,
+                          t='out_quad').start(self)
+            if has_error:
+                Animation(duration=.2, _current_line_color=self.error_color,
+                          _current_hint_text_color=self.error_color,
+                          _current_right_lbl_color=self.error_color).start(self)
+                if self.helper_text_mode == "on_error" and (self.error or self._text_len_error):
+                    Animation(duration=.2, _current_error_color=self.error_color).start(self)
+                elif self.helper_text_mode == "on_error" and not self.error and not self._text_len_error:
+                    Animation(duration=.2, _current_error_color=(0, 0, 0, 0)).start(self)
+                elif self.helper_text_mode == "persistent":
+                    Animation(duration=.2, _current_error_color=self.theme_cls.disabled_hint_text_color).start(self)
+                elif self.helper_text_mode == "on_focus":
+                    Animation(duration=.2, _current_error_color=(0, 0, 0, 0)).start(self)
+            else:
+                Animation(duration=.2, _current_line_color=self.line_color_focus,
+                          _current_hint_text_color=self.theme_cls.disabled_hint_text_color,
+                          _current_right_lbl_color=(0, 0, 0, 0)).start(self)
+                if self.helper_text_mode == "on_error":
+                    Animation(duration=.2, _current_error_color=(0, 0, 0, 0)).start(self)
+                elif self.helper_text_mode == "persistent":
+                    Animation(duration=.2, _current_error_color=self.theme_cls.disabled_hint_text_color).start(self)
+                elif self.helper_text_mode == "on_focus":
+                    Animation(duration=.2, _current_error_color=(0, 0, 0, 0)).start(self)
+
+                Animation(_line_width=0, duration=.2, t='out_quad').start(self)
+
+    def on_text(self, instance, text):
+        if len(text) > 0:
+            self.has_had_text = True
+        if self.max_text_length is not None:
+            self._right_msg_lbl.text = "{}/{}".format(len(text), self.max_text_length)
+            max_text_length = self.max_text_length
+        else:
+            max_text_length = sys.maxsize
+        if len(text) > max_text_length or all([self.required, len(self.text) == 0, self.has_had_text]):
+            self._text_len_error = True
+        else:
+            self._text_len_error = False
+        if self.error or self._text_len_error:
+            if self.focus:
+                Animation(duration=.2, _current_hint_text_color=self.error_color,
+                          _current_line_color=self.error_color).start(self)
+                if self.helper_text_mode == "on_error" and (self.error or self._text_len_error):
+                    Animation(duration=.2, _current_error_color=self.error_color).start(self)
+                if self._text_len_error:
+                    Animation(duration=.2, _current_right_lbl_color=self.error_color).start(self)
+        else:
+            if self.focus:
+                Animation(duration=.2, _current_right_lbl_color=self.theme_cls.disabled_hint_text_color).start(self)
+                Animation(duration=.2, _current_hint_text_color=self.line_color_focus,
+                          _current_line_color=self.line_color_focus).start(self)
+                if self.helper_text_mode == "on_error":
+                    Animation(duration=.2, _current_error_color=(0, 0, 0, 0)).start(self)
+        if len(self.text) != 0 and not self.focus:
+            self._hint_y = dp(14)
+            self._hint_lbl_font_size = sp(12)
+
+    def on_text_validate(self):
+        self.has_had_text = True
+        if self.max_text_length is None:
+            max_text_length = sys.maxsize
+        else:
+            max_text_length = self.max_text_length
+        if len(self.text) > max_text_length or all([self.required, len(self.text) == 0, self.has_had_text]):
+            self._text_len_error = True
+
+    def _set_hint(self, instance, text):
+        self._hint_lbl.text = text
+
+    def _set_msg(self, instance, text):
+        self._msg_lbl.text = text
+        self.helper_text = text
+
+    def _set_message_mode(self, instance, text):
+        self.helper_text_mode = text
+        if self.helper_text_mode == "persistent":
+            Animation(duration=.1, _current_error_color=self.theme_cls.disabled_hint_text_color).start(self)
+
+    def _set_max_text_length(self, instance, length):
+        self.max_text_length = length
+        self._right_msg_lbl.text = "{}/{}".format(len(self.text), length)
+
+    def on_color_mode(self, instance, mode):
+        if mode == "primary":
+            self._update_primary_color()
+        elif mode == "accent":
+            self._update_accent_color()
+        elif mode == "custom":
+            self._update_colors(self.line_color_focus)
+
+    def on_line_color_focus(self, *args):
+        if self.color_mode == "custom":
+            self._update_colors(self.line_color_focus)
+
+
 class BaseTextInputItem(ThemableBehavior, RectangularRippleBehavior,
                         ButtonBehavior, FloatLayout):
-    '''Base class to all TextInputItems. Not supposed to be instantiated on its own.
-    '''
+    """
+    Base class to all TextInputItems. Not supposed to be instantiated on its own.
+    """
 
     text = StringProperty()
     '''Text shown in the first line.
@@ -342,3 +639,72 @@ class ThreeLineAvatarIconTextInputItem(ThreeLineAvatarTextInputItem):
     _txt_right_pad = NumericProperty(dp(40) + m_res.HORIZ_MARGINS)
 
 
+# --------------------------------------------------------------------------------------
+#from kivy.app import App
+#from kivy.lang import Builder
+from kivy.uix.gridlayout import GridLayout
+
+from kivymd.list import MDList, OneLineListItem, TwoLineListItem, ThreeLineListItem
+from kivymd.theming import ThemeManager
+
+main_widget_kv = '''
+#: import MDLabel kivymd.label.MDLabel
+
+GridLayout:
+    cols: 1
+    ScrollView:
+        do_scroll_x: False
+        MDList:
+            OneLineListItem:
+                text: 'OneLineListItem KivyMD'
+            OneLineTextInputItem:
+                text: 'OneLineTextInputItem KivyIC'
+                
+            TwoLineListItem:
+                text: 'TwoLineListItem KivyMD'
+                secondary_text: 'This is a song, and these are the words'
+            
+            ThreeLineListItem:
+                text: 'ThreeLineListItem KivyMD'
+                secondary_text: 'This is a song, \\nand these are the words'
+                                    
+            OneLineIconListItem:
+                text: "Single-line item with left icon KivyMD"
+                IconLeftSampleWidget:
+                    id: li_icon_1
+                    icon: 'checkbox-blank-outline'
+
+            TwoLineIconListItem:
+                text: "Two-line item... KivyMD"
+                secondary_text: "...with left icon"
+                IconLeftSampleWidget:
+                    id: li_icon_2
+                    icon: 'checkbox-blank-outline'
+
+            ThreeLineIconListItem:
+                text: "Three-line item... KivyMD"
+                secondary_text: "...with left icon..." + '\\n' + "and third line!"
+                IconLeftSampleWidget:
+                    id: li_icon_3
+                    icon: 'checkbox-blank-outline'
+'''
+
+
+class IconLeftSampleWidget(ILeftBodyTouch, MDIconButton):
+    pass
+
+
+class IconRightSampleWidget(IRightBodyTouch, MDCheckbox):
+    pass
+
+
+class TextFields(App):
+    title = 'Text Fields'
+    theme_cls = ThemeManager()
+
+    def build(self):
+        return Builder.load_string(main_widget_kv)
+
+
+if __name__ == '__main__':
+    TextFields().run()

@@ -25,21 +25,20 @@ import kivymd.material_resources as m_res
 Builder.load_string('''
 #: include dp kivy.metrics.dp
 <ICTextFieldPlain>:
-    a: dp(12)
     canvas.before:
         Clear
         Color:
             rgba: self.line_color_normal
-        Line:
-            points: self.x, self.y + dp(12), self.x + self.width, self.y + dp(12)
-            width: 1
-            dash_length: dp(3)
-            dash_offset: 2 if self.disabled else 0
+        #Line:
+        #    points: self.x, self.y + dp(12), self.x + self.width, self.y + dp(12)
+        #    width: 1
+        #    dash_length: dp(3)
+        #    dash_offset: 2 if self.disabled else 0
         Color:
             rgba: self._current_line_color
         Rectangle:
             size: self._line_width, dp(2)
-            pos: self.center_x - (self._line_width / 2), self.y + dp(16)
+            pos: self.center_x - (self._line_width / 2), self.y
         Color:
             rgba: self._current_error_color
         Rectangle:
@@ -66,20 +65,14 @@ Builder.load_string('''
         Color:
             rgba: self.disabled_foreground_color if self.disabled else \
             (self.hint_text_color if not self.text and not self.focus else self.foreground_color)
-    canvas.after:
-        Color:
-            rgba: 0,0,1,.3
-        Rectangle:
-            size: self.size
-            pos: self.pos
     font_name: 'Roboto'
     foreground_color: app.theme_cls.text_color
     font_size: sp(15)
     bold: False
-    padding: 0, dp(16), 0, dp(7)
+    padding: 0, dp(16), 0, dp(9)
     multiline: False
     size_hint_y: None
-    height: self.minimum_height + dp(8)
+    height: self.minimum_height + dp(2)
    
 <BaseTextInputItem>
     size_hint_y: None
@@ -96,16 +89,30 @@ Builder.load_string('''
         id: _text_container
         orientation: 'vertical'
         pos: root.pos
-        #padding: root._txt_left_pad, root._txt_top_pad, root._txt_right_pad, root._txt_bot_pad
-        padding: root._txt_left_pad, 0, root._txt_right_pad, 0
+        padding: root._txt_left_pad, root._txt_top_pad, root._txt_right_pad, root._txt_bot_pad
         ICTextFieldPlain:
             id: _lbl_primary
             text: root.text
-            #padding: [0, 0]
+            padding: [0, 0]
             font_style: root.font_style
             theme_text_color: root.theme_text_color
             text_color: root.text_color
-
+            #canvas.after:
+            #    Color:
+            #        rgba: 0,0,1,.3
+            #    Rectangle:
+            #        size: self.size
+            #        pos: self.pos            
+        MDLabel:
+            id: _lbl_secondary
+            text: '' if root._num_lines == 1 else root.secondary_text
+            font_style: root.secondary_font_style
+            theme_text_color: root.secondary_theme_text_color
+            text_color: root.secondary_text_color
+            size_hint_y: None
+            height: 0 if root._num_lines == 1 else self.texture_size[1]
+            shorten: True if root._num_lines == 2 else False
+            
 <OneLineAvatarTextInputItem>
     BoxLayout:
         id: _left_container
@@ -412,6 +419,11 @@ class ICTextFieldPlain(ThemableBehavior, TextInput):
         if self.color_mode == "custom":
             self._update_colors(self.line_color_focus)
 
+# TODO - WORKING HERE ON DOUBLE TAP TO ENTER TEXT INPUT
+    def on_touch_down(self, touch):
+        print('touched')
+        if touch.is
+
 
 class BaseTextInputItem(ThemableBehavior, RectangularRippleBehavior,
                         ButtonBehavior, FloatLayout):
@@ -522,6 +534,7 @@ class ContainerSupportTI:
                 elif touch_event == 'up':
                     i.on_touch_up(touch)
         return triggered
+
 
 class OneLineTextInputItem(BaseTextInputItem):
     '''
@@ -663,26 +676,49 @@ GridLayout:
             TwoLineListItem:
                 text: 'TwoLineListItem KivyMD'
                 secondary_text: 'This is a song, and these are the words'
-            
+            TwoLineTextInputItem:
+                text: 'TwoLineTextInputItem KivIC'
+                secondary_text: 'This is a song, and these are the words'
+                            
             ThreeLineListItem:
                 text: 'ThreeLineListItem KivyMD'
                 secondary_text: 'This is a song, \\nand these are the words'
-                                    
+            ThreeLineTextInputItem:
+                text: 'ThreeLineListItem KivyMD'
+                secondary_text: 'This is a song, \\nand these are the words'
+                                                    
             OneLineIconListItem:
                 text: "Single-line item with left icon KivyMD"
                 IconLeftSampleWidget:
                     id: li_icon_1
                     icon: 'checkbox-blank-outline'
-
+            OneLineIconTextInputItem:
+                text: "Single-line item with left icon KivyIC"
+                IconLeftSampleWidget:
+                    id: li_icon_1
+                    icon: 'checkbox-blank-outline'
+                    
             TwoLineIconListItem:
                 text: "Two-line item... KivyMD"
                 secondary_text: "...with left icon"
                 IconLeftSampleWidget:
                     id: li_icon_2
                     icon: 'checkbox-blank-outline'
-
+            TwoLineIconTextInputItem:
+                text: "Two-line item... KivyIC"
+                secondary_text: "...with left icon"
+                IconLeftSampleWidget:
+                    id: li_icon_2
+                    icon: 'checkbox-blank-outline'
+                    
             ThreeLineIconListItem:
                 text: "Three-line item... KivyMD"
+                secondary_text: "...with left icon..." + '\\n' + "and third line!"
+                IconLeftSampleWidget:
+                    id: li_icon_3
+                    icon: 'checkbox-blank-outline'
+            ThreeLineIconTextInputItem:
+                text: "Three-line item... KivyIC"
                 secondary_text: "...with left icon..." + '\\n' + "and third line!"
                 IconLeftSampleWidget:
                     id: li_icon_3

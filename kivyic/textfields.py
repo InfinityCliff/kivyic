@@ -11,6 +11,7 @@ from kivy.properties import NumericProperty, StringProperty, BooleanProperty,\
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.textinput import TextInput
 
+from kivy.uix.behaviors.focus import FocusBehavior
 from kivy.uix.behaviors import ButtonBehavior
 from kivymd.theming import ThemableBehavior
 
@@ -186,8 +187,8 @@ Builder.load_string('''
         size: dp(48), dp(48)
 ''')
 
-
-class ICTextFieldPlain(ThemableBehavior, TextInput):
+# TODO - on selection move cursor to end of line and no text selected
+class ICTextFieldPlain(ThemableBehavior, TextInput, FocusBehavior):
     helper_text = StringProperty("This field is required")
     helper_text_mode = OptionProperty('none', options=['none', 'on_error', 'persistent', 'on_focus'])
 
@@ -419,10 +420,14 @@ class ICTextFieldPlain(ThemableBehavior, TextInput):
         if self.color_mode == "custom":
             self._update_colors(self.line_color_focus)
 
-# TODO - WORKING HERE ON DOUBLE TAP TO ENTER TEXT INPUT
     def on_touch_down(self, touch):
-        print('touched')
-        if touch.is
+        if not touch.is_double_tap:
+            self.focus = False
+        else:
+            #super(ICTextFieldPlain, self).on_touch_down(touch)
+            self.focus = True
+            self.select_text(0,0) #len(self.text)-1, len(self.text)-1)
+            return
 
 
 class BaseTextInputItem(ThemableBehavior, RectangularRippleBehavior,

@@ -31,11 +31,12 @@ class GoogleLink(object):
     CONFIG_FILE_IDS = []
     CLIENT_SECRET_FILE = ''
     APPLICATION_NAME = ''
-    LOCAL_FILE_PATH = ''
+    LOCAL_STORAGE_PATH = ''
     # TODO set to user directory or a application path after testing
     #HOME_DIR = '' # os.path.expanduser('~')
     SCOPE = ''
     settings = {}
+    service = None
 
     def __init__(self, scope, application_name, **kwargs):
         super(GoogleLink, self).__init__(**kwargs)
@@ -54,7 +55,7 @@ class GoogleLink(object):
         """
         # Authorize server-to-server interactions from Google Compute Engine.
 
-        credential_dir = os.path.join(self.home_dir, '.credentials')
+        credential_dir = os.path.join(self.LOCAL_STORAGE_PATH, '.credentials')
         if not os.path.exists(credential_dir):
             os.makedirs(credential_dir)
         credential_path = os.path.join(credential_dir,
@@ -74,21 +75,25 @@ class GoogleLink(object):
 
     def _settings(self, settings):
         self.CLIENT_SECRET_FILE = settings.get('CLIENT_SECRET_FILE', '')
-        self.LOCAL_FILE_PATH = settings.get('LOCAL_FILE_PATH', '')
-        #self.HOME_DIR = settings.get('HOME_DIR', '')
+        self.LOCAL_STORAGE_PATH = settings.get('LOCAL_STORAGE_PATH', '')
         self.SCOPE = settings.get('SCOPE', '')
+        self.APPLICATION_NAME = settings.get('APPLICATION_NAME', '')
 
     def open_service(self, settings):
         self._settings(settings)
-        credentials = self.get_credentials(self.SCOPE)
-        http = credentials.authorize(httplib2.Http())
 
-        return discovery.build('drive', 'v3', http=http)
+        if any([setting == '' for setting in settings]):
+            raise ValueError('Incorrect Google Link Settings')
+        else:
+            credentials = self.get_credentials(self.SCOPE)
+            http = credentials.authorize(httplib2.Http())
+
+            return discovery.build('drive', 'v3', http=http)
 
     def add_file(self, filename, application='json'):
         file_metadata = {'name': filename,
                          'parents': ['appDataFolder']}
-        file = os.path.join(self.LOCAL_FILE_PATH, filename)
+        file = os.path.join(self.LOCAL_STORAGE_PATH, filename)
 
         media = MediaFileUpload(file,
                                 mimetype='application/' + application,

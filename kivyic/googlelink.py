@@ -79,6 +79,8 @@ class GoogleLink(object):
         self.SCOPE = settings.get('SCOPE', '')
         self.APPLICATION_NAME = settings.get('APPLICATION_NAME', '')
 
+    def open_service(self):
+
     def open_service(self, settings):
         self._settings(settings)
 

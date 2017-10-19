@@ -41,7 +41,7 @@
         id: title_container
         size_hint: 1, None
         #x: root.x + root.width - m_res.HORIZ_MARGINS - self.width
-        height: dp(12)
+        height: 0 if self.text == '' else dp(12)
         y: root.y + root.height - self.height
         text: root.title
         canvas.after:
@@ -54,7 +54,7 @@
         id: description_container
         size_hint: 1, None
         #x: root.x + root.width - m_res.HORIZ_MARGINS - self.width
-        height: dp(12)
+        height: 0 if self.text == '' else dp(12)
         y: root.y
         text: root.description
         canvas.after:

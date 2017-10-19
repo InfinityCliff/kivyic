@@ -31,6 +31,7 @@ Builder.load_string('''
 ''')
 
 
+# noinspection PyPackageRequirements,PyPackageRequirements
 class ICSettingList(GridLayout):  # from MDList
     '''ListItem container. Best used in conjunction with a
     :class:`kivy.uix.ScrollView`.

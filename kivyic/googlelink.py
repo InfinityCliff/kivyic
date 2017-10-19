@@ -27,24 +27,21 @@ class GoogleLinkScreen(Screen):
 
 
 class GoogleLink(object):
-    APP_DATA_FILE_ID = ''
-    CONFIG_FILE_IDS = []
-    CLIENT_SECRET_FILE = ''
+    # https://developers.google.com/drive/v3/web/quickstart/python
+
+    _API_KEY = ''
+    _CLIENT_SECRET_FILE = './rsc/client_secrets.json'
     APPLICATION_NAME = ''
     LOCAL_STORAGE_PATH = ''
-    # TODO set to user directory or a application path after testing
-    #HOME_DIR = '' # os.path.expanduser('~')
+    _CREDENTIAL_PATH = '.credentials/'
     SCOPE = ''
     settings = {}
     service = None
 
-    def __init__(self, scope, application_name, **kwargs):
-        super(GoogleLink, self).__init__(**kwargs)
-        #self.SCOPE = scope
-        #self.APPLICATION_NAME = application_name
-        #self.service = self.open_service()
+#    def __init__(self, **kwargs):
+#        super(GoogleLink, self).__init__(**kwargs)
 
-    def get_credentials(self, scope):
+    def get_credentials(self):
         """Gets valid user credentials from storage.
 
         If nothing has been stored, or if the stored credentials are invalid,
@@ -55,16 +52,22 @@ class GoogleLink(object):
         """
         # Authorize server-to-server interactions from Google Compute Engine.
 
-        credential_dir = os.path.join(self.LOCAL_STORAGE_PATH, '.credentials')
+        credential_dir = self.LOCAL_STORAGE_PATH + self._CREDENTIAL_PATH
+
         if not os.path.exists(credential_dir):
             os.makedirs(credential_dir)
         credential_path = os.path.join(credential_dir,
-                                       'drive-python-quickstart.json')
+                                       self.APPLICATION_NAME + '.json')
 
         store = Storage(credential_path)
-        credentials = store.get()
+        credentials = False
+        try:
+            credentials = store.get()
+        except UserWarning:
+            pass
+
         if not credentials or credentials.invalid:
-            flow = client.flow_from_clientsecrets(self.CLIENT_SECRET_FILE, scope)
+            flow = client.flow_from_clientsecrets(self._CLIENT_SECRET_FILE, self.SCOPE)
             flow.user_agent = self.APPLICATION_NAME
             if flags:
                 credentials = tools.run_flow(flow, store, flags)
@@ -74,12 +77,35 @@ class GoogleLink(object):
         return credentials
 
     def _settings(self, settings):
-        self.CLIENT_SECRET_FILE = settings.get('CLIENT_SECRET_FILE', '')
         self.LOCAL_STORAGE_PATH = settings.get('LOCAL_STORAGE_PATH', '')
         self.SCOPE = settings.get('SCOPE', '')
         self.APPLICATION_NAME = settings.get('APPLICATION_NAME', '')
+        self._API_KEY = settings.get('API_KEY', '')
 
-    def open_service(self):
+    def _open_service(self):
+        # OAuth 2.0 for Mobile & Desktop Apps
+        # https://developers.google.com/identity/protocols/OAuth2InstalledApp
+
+        # Try Sign-In for iOS
+        # https://developers.google.com/identity/sign-in/ios/start?configured=true
+
+        # Enable Google Services for your App
+        # https://developers.google.com/mobile/add?platform=ios&cntapi=signin&cntapp=Default%20Demo%20App&cntpkg=com.google.samples.quickstart.SignInExample&cnturl=https:%2F%2Fdevelopers.google.com%2Fidentity%2Fsign-in%2Fios%2Fstart%3Fconfigured%3Dtrue&cntlbl=Continue%20with%20Try%20Sign-In
+
+        # Add Google Sign-In to Your iOS App
+        # https://developers.google.com/identity/sign-in/ios/
+
+
+        #https://stackoverflow.com/questions/46717454/which-library-i-should-use-to-obtain-access-token
+
+
+
+        credentials = self.get_credentials()
+        http = credentials.authorize(httplib2.Http())
+
+        self.service = discovery.build('drive', 'v3', http=http)
+        #self.service = discovery.build('drive', 'v3', developerKey=self._API_KEY)
+        return self.service
 
     def open_service(self, settings):
         self._settings(settings)
@@ -87,10 +113,7 @@ class GoogleLink(object):
         if any([setting == '' for setting in settings]):
             raise ValueError('Incorrect Google Link Settings')
         else:
-            credentials = self.get_credentials(self.SCOPE)
-            http = credentials.authorize(httplib2.Http())
-
-            return discovery.build('drive', 'v3', http=http)
+            return self._open_service()
 
     def add_file(self, filename, application='json'):
         file_metadata = {'name': filename,
@@ -116,7 +139,7 @@ class GoogleLink(object):
         except errors.HttpError as error:
             print('An error occurred: %s' % error)
 
-    def folder_list(self):
+    def server_folder_list(self):
         for file in self.get_folder_list():
             print('Found file: %s (%s)' % (file.get('name'), file.get('id')))
 
@@ -125,6 +148,26 @@ class GoogleLink(object):
                                              fields='nextPageToken, files(id, name)',
                                              pageSize=10).execute()
         return response.get('files', [])
+
+    def update_file(self, file_id, new_filename):
+        new_filename = self.LOCAL_STORAGE_PATH + new_filename
+        try:
+            # First retrieve the file from the API.
+            file = self.service.files().get(fileId=file_id).execute()
+            # File's new content.
+            media_body = MediaFileUpload(
+                    new_filename, resumable=True)
+
+            # Send the request to the API.
+            updated_file = self.service.files().update(
+                    fileId=file_id,
+                    body=file,
+                    media_body=media_body).execute()
+            return updated_file
+        except errors.HttpError as error:
+            print('An error occurred: %s' % error)
+            return None
+
 
     def update_file(self, file_id, new_title, new_description, new_mime_type,
                     new_filename, new_revision):
@@ -166,6 +209,10 @@ class GoogleLink(object):
             return None
 
 if __name__ == '__main__':
-    gc = GoogleLink('https://www.googleapis.com/auth/drive.appdata', 'Task Manager')
-    gc.LOCAL_FILE_PATH = './'
-    gc.folder_list()
+    gc = GoogleLink()
+    set = {'LOCAL_STORAGE_PATH': '.local_storage/',
+           'SCOPE': "https://www.googleapis.com/auth/drive.appdata",
+           'APPLICATION_NAME': 'Task Manager',
+           'API_KEY': 'AIzaSyDjQ_pg_ICdC_RenDu2DGmT54XtoYGXQSo'}
+    gc.open_service(set)
+    gc.server_folder_list()

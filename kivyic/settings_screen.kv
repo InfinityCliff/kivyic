@@ -1,6 +1,27 @@
 #:import OneLineListItem kivymd.list.OneLineListItem
 #:import MDDropdownMenu kivymd.menu.MDDropdownMenu
 
+<ICSetSwtich>:
+    text: 'Boolean'
+    pos: self.parent.pos
+    active: bool(self.parent.values.index(self.parent.value)) if self.parent.value in self.parent.values else False
+    on_active: self.parent.value = self.parent.values[int(args[1])]
+
+<ICSettingBehaviour>:
+    canvas.before:
+        Color:
+            rgba: 1,1,1,1
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+<ICSettingOptions>:
+    Label:
+        text: root.value or ''
+        pos: root.pos
+        font_size: '15sp'
+
+
 <ICSettingList>
     cols: 1
     size_hint_y: None

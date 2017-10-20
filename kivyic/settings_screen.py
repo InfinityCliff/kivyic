@@ -1,18 +1,24 @@
 # -*- coding: utf-8 -*-
 from kivy.app import App
 from kivy.lang import Builder
+from kivy.metrics import dp
+from kivy.clock import Clock
 
 from kivy.uix.screenmanager import Screen, SlideTransition, CardTransition
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.boxlayout import BoxLayout
 
+from kivy.uix.label import Label
+from kivy.uix.button import Button
+
 from kivy.properties import ObjectProperty, NumericProperty, StringProperty, ListProperty, \
                             OptionProperty
-
 from kivy.uix.behaviors import ButtonBehavior
 
-from kivy.metrics import dp
+from kivy.uix.settings import SettingsWithSpinner, InterfaceWithSpinner
+from kivy.uix.settings import SettingItem, SettingBoolean, SettingOptions
+
 
 import kivymd.material_resources as m_res
 from kivymd.selectioncontrols import MDSwitch
@@ -29,6 +35,50 @@ from kivyic import path
 Builder.load_string('''
 #: include ''' + path + '''/settings_screen.kv
 ''')
+
+
+class ICSetSwtich(MDSwitch):
+    pass
+
+
+class ICSettingBehaviour(SettingItem):
+
+    def __init__(self, *args, **kargs):
+        super(ICSettingBehaviour, self).__init__(*args, **kargs)
+        self.content.padding = [dp(50), 0, dp(20), 0]
+        self.ids.labellayout.color = [0, 0, 0, 1]
+
+
+class ICSettingBoolean(SettingBoolean, ICSettingBehaviour):
+    values = ListProperty(['0', '1'])
+
+    def __init__(self, *args, **kargs):
+        super(ICSettingBoolean, self).__init__(*args, **kargs)
+        #self.content.padding = [50, 0, 20, 0]
+        self.ids.labellayout.color = [0, 0, 0, 1]
+        self.content.clear_widgets()
+        self.content.add_widget(ICSetSwtich())
+
+class ICSettingOptions(SettingOptions, ICSettingBehaviour):
+
+    def __init__(self, *args, **kargs):
+        super(ICSettingOptions, self).__init__(*args, **kargs)
+        #self.content.clear_widgets()
+        #self.content.add_widget(Button())
+
+
+class ICSettingsWithSpinner(InterfaceWithSpinner):
+    def add_panel(self, panel, title, uid):
+        super().add_panel(panel, title, uid)
+
+
+class ICSettings(SettingsWithSpinner):
+    interface_cls = ICSettingsWithSpinner
+
+    def __init__(self, *args, **kargs):
+        super(ICSettings, self).__init__(*args, **kargs)
+        self.register_type('icbool', ICSettingBoolean)
+        self.register_type('icoptions', ICSettingOptions)
 
 
 # noinspection PyPackageRequirements,PyPackageRequirements

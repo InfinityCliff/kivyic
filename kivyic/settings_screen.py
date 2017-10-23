@@ -85,10 +85,23 @@ register_types = {'ic_bool': ICSettingBoolean,
 
 class SettingMenu(Toolbar):
     selected_uid = NumericProperty(0)
-    spinner = ObjectProperty()
+    #spinner = ObjectProperty()
+    values = ListProperty()
     panel_names = DictProperty({})
-    close_button = ObjectProperty()
+    #close_button = ObjectProperty()
 
+    def add_item(self, name, uid):
+        #values = self.spinner.values
+        values = self.values
+        if name in values:
+            i = 2
+            while name + ' {}'.format(i) in values:
+                i += 1
+            name = name + ' {}'.format(i)
+        self.panel_names[name] = uid
+        #self.spinner.values.append(name)
+        #if not self.spinner.text:
+        #    self.spinner.text = name
 
 class ICInterfaceWithCloseButton(BoxLayout):
     '''A settings interface that displays a close button at the top for
@@ -141,7 +154,7 @@ class ICInterfaceWithCloseButton(BoxLayout):
 
         '''
         self.content.add_panel(panel, name, uid)
-        #self.menu.add_item(name, uid)
+        self.menu.add_item(name, uid)
 
     def on_close(self, *args):
         pass
@@ -161,8 +174,6 @@ class ICSettingsWithSpinner(SettingsWithSpinner):
         for r_type, cls in register_types.items():
             self.register_type(r_type, cls)
 
-
-# TODO WORKING HERE TO GET NO MENU TO HAVE A DONE BUTTON
 class ICSettingsWithCloseButton(Settings):
     '''A settings widget that displays one settings panel at a time with a
     only a close button at the top.

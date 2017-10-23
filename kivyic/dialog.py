@@ -69,11 +69,11 @@ class DialogOKDismiss(MDDialog):
         self.text = 'default'
         self.bind(text=self.setter(content.text))
         self.content = content
-
         self.add_action_button("OK",
                                action=lambda *x: self.ok())
         self.add_action_button("Dismiss",
                                action=lambda *x: self.dismiss())
+        self.content.focus=True
 
     def ok(self):
         self.dispatch('on_ok')

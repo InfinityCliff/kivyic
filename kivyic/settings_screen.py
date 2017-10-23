@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from kivy.app import App
 from kivy.lang import Builder
-from kivy.metrics import dp
+from kivy.metrics import dp, sp
 from kivy.clock import Clock
 
 from kivy.uix.screenmanager import Screen, SlideTransition, CardTransition
@@ -13,11 +13,12 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 
 from kivy.properties import ObjectProperty, NumericProperty, StringProperty, ListProperty, \
-                            OptionProperty
+                            OptionProperty, DictProperty
 from kivy.uix.behaviors import ButtonBehavior
 
-from kivy.uix.settings import SettingsWithSpinner, InterfaceWithSpinner
-from kivy.uix.settings import SettingItem, SettingBoolean, SettingOptions
+from kivy.uix.settings import SettingsWithSpinner, SettingsWithNoMenu
+from kivy.uix.settings import InterfaceWithSpinner, InterfaceWithNoMenu
+from kivy.uix.settings import Settings, SettingItem, SettingBoolean, SettingOptions
 
 
 import kivymd.material_resources as m_res
@@ -30,6 +31,10 @@ from kivymd.menu import MDDropdownMenu
 from kivymd.theming import ThemableBehavior
 
 from kivyic import path
+from kivyic.toolbar import Toolbar
+
+# custom settings
+# http://cheparev.com/kivy-receipt-custom-settings/
 
 
 Builder.load_string('''
@@ -37,48 +42,138 @@ Builder.load_string('''
 ''')
 
 
-class ICSetSwtich(MDSwitch):
-    pass
-
 
 class ICSettingBehaviour(SettingItem):
 
     def __init__(self, *args, **kargs):
         super(ICSettingBehaviour, self).__init__(*args, **kargs)
-        self.content.padding = [dp(50), 0, dp(20), 0]
+        self.content.padding = [dp(100), 0, dp(20), 0]
         self.ids.labellayout.color = [0, 0, 0, 1]
 
 
-class ICSettingBoolean(SettingBoolean, ICSettingBehaviour):
+class ICSettingBoolean(ICSettingBehaviour):
     values = ListProperty(['0', '1'])
 
     def __init__(self, *args, **kargs):
         super(ICSettingBoolean, self).__init__(*args, **kargs)
-        #self.content.padding = [50, 0, 20, 0]
         self.ids.labellayout.color = [0, 0, 0, 1]
-        self.content.clear_widgets()
-        self.content.add_widget(ICSetSwtich())
+
 
 class ICSettingOptions(SettingOptions, ICSettingBehaviour):
+    lbl = ObjectProperty()
 
     def __init__(self, *args, **kargs):
         super(ICSettingOptions, self).__init__(*args, **kargs)
-        #self.content.clear_widgets()
-        #self.content.add_widget(Button())
+        self.content.clear_widgets()
+        self.lbl = Label()
+        #self.lbl.bind(text=self.on_value)
+        self.lbl.text = self.value
+        self.lbl.pos = self.pos
+        self.lbl.font_size = sp(15)
+        self.lbl.color = [0, 0, 0, 1]
+        self.content.add_widget(self.lbl)
+
+    def on_value(self, instance, value):
+        super().on_value(instance, value)
+        if isinstance(self.lbl, Label):
+            self.lbl.text = self.value
 
 
-class ICSettingsWithSpinner(InterfaceWithSpinner):
+register_types = {'ic_bool': ICSettingBoolean,
+                  'ic_options': ICSettingOptions}
+
+
+class SettingMenu(Toolbar):
+    selected_uid = NumericProperty(0)
+    spinner = ObjectProperty()
+    panel_names = DictProperty({})
+    close_button = ObjectProperty()
+
+
+class ICInterfaceWithCloseButton(BoxLayout):
+    '''A settings interface that displays a close button at the top for
+    closing the panel no switching between panels.
+
+    The workings of this class are considered internal and are not
+    documented. See :meth:`InterfaceWithSidebar` for
+    information on implementing your own interface class.
+
+    '''
+
+    __events__ = ('on_close', )
+
+    menu = ObjectProperty()
+    '''(internal) A reference to the sidebar menu widget.
+
+    :attr:`menu` is an :class:`~kivy.properties.ObjectProperty` and
+    defaults to None.
+    '''
+
+    content = ObjectProperty()
+    '''(internal) A reference to the panel display widget (a
+    :class:`ContentPanel`).
+
+    :attr:`menu` is an :class:`~kivy.properties.ObjectProperty` and
+    defaults to None.
+
+    '''
+
+    def __init__(self, *args, **kwargs):
+        super(ICInterfaceWithCloseButton, self).__init__(*args, **kwargs)
+        #self.menu.close_button.bind(
+        #        on_release=lambda j: self.dispatch('on_close'))
+
+    def add_panel(self, panel, name, uid):
+        '''This method is used by Settings to add new panels for possible
+        display. Any replacement for ContentPanel *must* implement
+        this method.
+
+        :Parameters:
+            `panel`: :class:`SettingsPanel`
+                It should be stored and the interface should provide a way to
+                switch between panels.
+            `name`:
+                The name of the panel as a string. It may be used to represent
+                the panel but may not be unique.
+            `uid`:
+                A unique int identifying the panel. It should be used to
+                identify and switch between panels.
+
+        '''
+        self.content.add_panel(panel, name, uid)
+        #self.menu.add_item(name, uid)
+
+    def on_close(self, *args):
+        pass
+
+
+class ICInterfaceWithSpinner(InterfaceWithSpinner):
+
     def add_panel(self, panel, title, uid):
         super().add_panel(panel, title, uid)
 
 
-class ICSettings(SettingsWithSpinner):
-    interface_cls = ICSettingsWithSpinner
+class ICSettingsWithSpinner(SettingsWithSpinner):
+    interface_cls = ICInterfaceWithSpinner
 
     def __init__(self, *args, **kargs):
-        super(ICSettings, self).__init__(*args, **kargs)
-        self.register_type('icbool', ICSettingBoolean)
-        self.register_type('icoptions', ICSettingOptions)
+        super(ICSettingsWithSpinner, self).__init__(*args, **kargs)
+        for r_type, cls in register_types.items():
+            self.register_type(r_type, cls)
+
+
+# TODO WORKING HERE TO GET NO MENU TO HAVE A DONE BUTTON
+class ICSettingsWithCloseButton(Settings):
+    '''A settings widget that displays one settings panel at a time with a
+    only a close button at the top.
+
+    '''
+    def __init__(self, *args, **kwargs):
+        self.interface_cls = ICInterfaceWithCloseButton
+        super(ICSettingsWithCloseButton, self).__init__(*args, **kwargs)
+
+        for r_type, cls in register_types.items():
+            self.register_type(r_type, cls)
 
 
 # noinspection PyPackageRequirements,PyPackageRequirements

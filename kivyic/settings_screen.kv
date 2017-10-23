@@ -1,11 +1,41 @@
 #:import OneLineListItem kivymd.list.OneLineListItem
 #:import MDDropdownMenu kivymd.menu.MDDropdownMenu
 
-<ICSetSwtich>:
-    text: 'Boolean'
-    pos: self.parent.pos
-    active: bool(self.parent.values.index(self.parent.value)) if self.parent.value in self.parent.values else False
-    on_active: self.parent.value = self.parent.values[int(args[1])]
+#<MenuClose>:
+#    orientation: 'horizontal'
+#    size_hint_y: None
+#    height: '50dp'
+#    close_button: button
+#    Button:
+#        text: 'Done'
+#        id: button
+#        size_hint_x: None
+#        width: min(dp(200), 0.4*root.width)
+#        font_size: '15sp'
+
+<ICInterfaceWithCloseButton>:
+    orientation: 'vertical'
+    menu: menu
+    content: content
+    SettingMenu:
+        id: menu
+        title: 'Settings'
+        pos_hint: {'center_x': 0.5, 'center_y': 1}
+        md_bg_color: get_color_from_hex(colors['Blue']['500'])
+        background_palette: 'Blue'
+        background_hue: '500'
+
+        right_action_items: [['close-box-outline', lambda x: root.dispatch('on_close')]]
+    ContentPanel:
+        id: content
+        current_uid: menu.selected_uid
+
+<ICSettingBoolean>:
+    MDSwitch:
+        text: 'Boolean'
+        pos: root.pos
+        active: bool(root.values.index(root.value)) if root.value in root.values else False
+        on_active: root.value = root.values[int(args[1])]
 
 <ICSettingBehaviour>:
     canvas.before:
@@ -15,12 +45,12 @@
             size: self.size
             pos: self.pos
 
-<ICSettingOptions>:
-    Label:
-        text: root.value or ''
-        pos: root.pos
-        font_size: '15sp'
-
+#<ICSettingOptions>:
+#    Label:
+#        text: root.value or ''
+#        pos: root.pos
+#        font_size: '15sp'
+#        color: [0, 0, 0, 1]
 
 <ICSettingList>
     cols: 1

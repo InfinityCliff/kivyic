@@ -5,12 +5,15 @@ from kivy.animation import Animation
 from kivy.lang import Builder
 from kivy.metrics import dp, sp
 
+from kivyic import path
 
-from kivy.properties import NumericProperty, StringProperty, BooleanProperty,\
+from kivy.properties import NumericProperty, StringProperty, BooleanProperty, ObjectProperty,\
                             OptionProperty, ListProperty
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.textinput import TextInput
-
+# from kivy.uix.button import Button
+from kivy.factory import Factory
 from kivy.uix.behaviors.focus import FocusBehavior
 from kivy.uix.behaviors import ButtonBehavior
 from kivymd.theming import ThemableBehavior
@@ -20,174 +23,20 @@ from kivymd.list import ILeftBody, ILeftBodyTouch, IRightBody, IRightBodyTouch
 from kivymd.button import MDIconButton
 from kivymd.textfields import TextfieldLabel
 from kivymd.selectioncontrols import MDCheckbox
+from kivymd.navigationdrawer import NavigationLayout
+from kivy.uix.gridlayout import GridLayout
 
+from kivymd.list import MDList, OneLineListItem, TwoLineListItem, ThreeLineListItem
+from kivymd.theming import ThemeManager
 import kivymd.material_resources as m_res
 
 Builder.load_string('''
 #: include dp kivy.metrics.dp
-<ICSearchInput>:
 
-<ICTextFieldPlain>:
-    canvas.before:
-        Clear
-        Color:
-            rgba: self.line_color_normal
-        #Line:
-        #    points: self.x, self.y + dp(12), self.x + self.width, self.y + dp(12)
-        #    width: 1
-        #    dash_length: dp(3)
-        #    dash_offset: 2 if self.disabled else 0
-        Color:
-            rgba: self._current_line_color
-        Rectangle:
-            size: self._line_width, dp(2)
-            pos: self.center_x - (self._line_width / 2), self.y
-        Color:
-            rgba: self._current_error_color
-        Rectangle:
-            texture: self._msg_lbl.texture
-            size: self._msg_lbl.texture_size
-            pos: self.x, self.y
-        Color:
-            rgba: self._current_right_lbl_color
-        Rectangle:
-            texture: self._right_msg_lbl.texture
-            size: self._right_msg_lbl.texture_size
-            pos: self.width-self._right_msg_lbl.texture_size[0]+dp(45), self.y
-        Color:
-            rgba: (self._current_line_color if self.focus and not self.cursor_blink else (0, 0, 0, 0))
-        Rectangle:
-            pos: [int(x) for x in self.cursor_pos]
-            size: 1, -self.line_height
-        Color:
-            rgba: self._current_hint_text_color
-        Rectangle:
-            texture: self._hint_lbl.texture
-            size: self._hint_lbl.texture_size
-            pos: self.x, self.y + self.height - self._hint_y
-        Color:
-            rgba: self.disabled_foreground_color if self.disabled else \
-            (self.hint_text_color if not self.text and not self.focus else self.foreground_color)
-    font_name: 'Roboto'
-    foreground_color: app.theme_cls.text_color
-    font_size: sp(15)
-    bold: False
-    padding: 0, dp(16), 0, dp(9)
-    multiline: False
-    size_hint_y: None
-    height: self.minimum_height + dp(2)
-   
-<BaseTextInputItem>
-    size_hint_y: None
-    canvas:
-        Color:
-            rgba: self.theme_cls.divider_color if root.divider is not None else (0, 0, 0, 0)
-        Line:
-            points: (root.x ,root.y, root.x+self.width, root.y)\
-                    if root.divider == 'Full' else\
-                    (root.x+root._txt_left_pad, root.y,\
-                    root.x+self.width-root._txt_left_pad-root._txt_right_pad,\
-                    root.y)
-    BoxLayout:
-        id: _text_container
-        orientation: 'vertical'
-        pos: root.pos
-        padding: root._txt_left_pad, root._txt_top_pad, root._txt_right_pad, root._txt_bot_pad
-        ICTextFieldPlain:
-            id: _lbl_primary
-            text: root.text
-            padding: [0, 0]
-            font_style: root.font_style
-            theme_text_color: root.theme_text_color
-            text_color: root.text_color
-            #canvas.after:
-            #    Color:
-            #        rgba: 0,0,1,.3
-            #    Rectangle:
-            #        size: self.size
-            #        pos: self.pos            
-        MDLabel:
-            id: _lbl_secondary
-            text: '' if root._num_lines == 1 else root.secondary_text
-            font_style: root.secondary_font_style
-            theme_text_color: root.secondary_theme_text_color
-            text_color: root.secondary_text_color
-            size_hint_y: None
-            height: 0 if root._num_lines == 1 else self.texture_size[1]
-            shorten: True if root._num_lines == 2 else False
-            
-<OneLineAvatarTextInputItem>
-    BoxLayout:
-        id: _left_container
-        size_hint: None, None
-        x: root.x + dp(16)
-        y: root.y + root.height/2 - self.height/2
-        size: dp(40), dp(40)
-
-<ThreeLineAvatarTextInputItem>
-    BoxLayout:
-        id: _left_container
-        size_hint: None, None
-        x: root.x + dp(16)
-        y: root.y + root.height - root._txt_top_pad - self.height - dp(5)
-        size: dp(40), dp(40)
-
-<OneLineIconTextInputItem>
-    BoxLayout:
-        id: _left_container
-        size_hint: None, None
-        x: root.x + dp(16)
-        y: root.y + root.height/2 - self.height/2
-        size: dp(48), dp(48)
-
-<ThreeLineIconTextInputItem>
-    BoxLayout:
-        id: _left_container
-        size_hint: None, None
-        x: root.x + dp(16)
-        y: root.y + root.height - root._txt_top_pad - self.height - dp(5)
-        size: dp(48), dp(48)
-
-<OneLineRightIconTextInputItem>
-    BoxLayout:
-        id: _right_container
-        size_hint: None, None
-        x: root.x + root.width - m_res.HORIZ_MARGINS - self.width
-        y: root.y + root.height/2 - self.height/2
-        size: dp(48), dp(48)
-
-<ThreeLineRightIconTextInputItem>
-    BoxLayout:
-        id: _right_container
-        size_hint: None, None
-        x: root.x + root.width - m_res.HORIZ_MARGINS - self.width
-        y: root.y + root.height/2 - self.height/2
-        size: dp(48), dp(48)
-
-<OneLineAvatarIconTextInputItem>
-    BoxLayout:
-        id: _right_container
-        size_hint: None, None
-        x: root.x + root.width - m_res.HORIZ_MARGINS - self.width
-        y: root.y + root.height/2 - self.height/2
-        size: dp(48), dp(48)
-
-<TwoLineAvatarIconTextInputItem>
-    BoxLayout:
-        id: _right_container
-        size_hint: None, None
-        x: root.x + root.width - m_res.HORIZ_MARGINS - self.width
-        y: root.y + root.height/2 - self.height/2
-        size: dp(48), dp(48)
-
-<ThreeLineAvatarIconTextInputItem>
-    BoxLayout:
-        id: _right_container
-        size_hint: None, None
-        x: root.x + root.width - m_res.HORIZ_MARGINS - self.width
-        y: root.y + root.height - root._txt_top_pad - self.height - dp(5)
-        size: dp(48), dp(48)
+#: include ''' + path + '''/textfields.kv
 ''')
+# TODO - HERE - WHY DOES ICSEARCH INPUT NOT SHOW UP UNLESS IMPLICETLY PUT HERE
+
 
 # TODO - on selection move cursor to end of line and no text selected
 class ICTextFieldPlain(ThemableBehavior, TextInput, FocusBehavior):
@@ -468,7 +317,7 @@ class BaseTextInputItem(ThemableBehavior, RectangularRippleBehavior,
     '''
 
     secondary_text_color = ListProperty(None)
-    ''' Text color used for secondary text if secondary_theme_text_color 
+    ''' Text color used for secondary text if secondary_theme_text_color
     is set to 'Custom' '''
 
     secondary_theme_text_color = StringProperty('Secondary',allownone=True)
@@ -659,80 +508,6 @@ class ThreeLineAvatarIconTextInputItem(ThreeLineAvatarTextInputItem):
     _txt_right_pad = NumericProperty(dp(40) + m_res.HORIZ_MARGINS)
 
 
-# --------------------------------------------------------------------------------------
-#from kivy.app import App
-#from kivy.lang import Builder
-from kivy.uix.gridlayout import GridLayout
-
-from kivymd.list import MDList, OneLineListItem, TwoLineListItem, ThreeLineListItem
-from kivymd.theming import ThemeManager
-
-main_widget_kv = '''
-#: import MDLabel kivymd.label.MDLabel
-
-GridLayout:
-    cols: 1
-    ScrollView:
-        do_scroll_x: False
-        MDList:
-            OneLineListItem:
-                text: 'OneLineListItem KivyMD'
-            OneLineTextInputItem:
-                text: 'OneLineTextInputItem KivyIC'
-                
-            TwoLineListItem:
-                text: 'TwoLineListItem KivyMD'
-                secondary_text: 'This is a song, and these are the words'
-            TwoLineTextInputItem:
-                text: 'TwoLineTextInputItem KivIC'
-                secondary_text: 'This is a song, and these are the words'
-                            
-            ThreeLineListItem:
-                text: 'ThreeLineListItem KivyMD'
-                secondary_text: 'This is a song, \\nand these are the words'
-            ThreeLineTextInputItem:
-                text: 'ThreeLineListItem KivyMD'
-                secondary_text: 'This is a song, \\nand these are the words'
-                                                    
-            OneLineIconListItem:
-                text: "Single-line item with left icon KivyMD"
-                IconLeftSampleWidget:
-                    id: li_icon_1
-                    icon: 'checkbox-blank-outline'
-            OneLineIconTextInputItem:
-                text: "Single-line item with left icon KivyIC"
-                IconLeftSampleWidget:
-                    id: li_icon_1
-                    icon: 'checkbox-blank-outline'
-                    
-            TwoLineIconListItem:
-                text: "Two-line item... KivyMD"
-                secondary_text: "...with left icon"
-                IconLeftSampleWidget:
-                    id: li_icon_2
-                    icon: 'checkbox-blank-outline'
-            TwoLineIconTextInputItem:
-                text: "Two-line item... KivyIC"
-                secondary_text: "...with left icon"
-                IconLeftSampleWidget:
-                    id: li_icon_2
-                    icon: 'checkbox-blank-outline'
-                    
-            ThreeLineIconListItem:
-                text: "Three-line item... KivyMD"
-                secondary_text: "...with left icon..." + '\\n' + "and third line!"
-                IconLeftSampleWidget:
-                    id: li_icon_3
-                    icon: 'checkbox-blank-outline'
-            ThreeLineIconTextInputItem:
-                text: "Three-line item... KivyIC"
-                secondary_text: "...with left icon..." + '\\n' + "and third line!"
-                IconLeftSampleWidget:
-                    id: li_icon_3
-                    icon: 'checkbox-blank-outline'
-'''
-
-
 class IconLeftSampleWidget(ILeftBodyTouch, MDIconButton):
     pass
 
@@ -741,13 +516,28 @@ class IconRightSampleWidget(IRightBodyTouch, MDCheckbox):
     pass
 
 
+class ICSearchInput(ThemableBehavior, BoxLayout, FocusBehavior):
+    hint_text = StringProperty('hint text')
+    text_input = ObjectProperty()
+    text = StringProperty()
+
+    def on_text_validate(self, instance, value):
+        pass
+
+    def on_cancel(self):
+        print('on cancel')
+        self.text_input.text = ''
+        self.focus = False
+
+
 class TextFields(App):
     title = 'Text Fields'
     theme_cls = ThemeManager()
 
     def build(self):
-        return Builder.load_string(main_widget_kv)
-
+        main_widget = Factory.TestScreen()
+        main_widget.ids.scr_mngr.current = 'buildtester'
+        return main_widget
 
 if __name__ == '__main__':
     TextFields().run()

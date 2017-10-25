@@ -25,6 +25,8 @@ import kivymd.material_resources as m_res
 
 Builder.load_string('''
 #: include dp kivy.metrics.dp
+<ICSearchInput>:
+
 <ICTextFieldPlain>:
     canvas.before:
         Clear

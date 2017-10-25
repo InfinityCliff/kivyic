@@ -187,6 +187,20 @@ class ICSettingsWithCloseButton(Settings):
             self.register_type(r_type, cls)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # noinspection PyPackageRequirements,PyPackageRequirements
 class ICSettingList(GridLayout):  # from MDList
     '''ListItem container. Best used in conjunction with a

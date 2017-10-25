@@ -1,9 +1,10 @@
+#: include dp kivy.metrics.dp
+#:import ICIconLabel kivyic.label.ICIconLabel
 #:import MDLabel kivymd.label.MDLabel
 #:import MDNavigationDrawer kivymd.navigationdrawer.MDNavigationDrawer
 #:import NavigationLayout kivymd.navigationdrawer.NavigationLayout
 #:import NavigationDrawerDivider kivymd.navigationdrawer.NavigationDrawerDivider
 #:import NavigationDrawerToolbar kivymd.navigationdrawer.NavigationDrawerToolbar
-#:import ICIconLabel kivyic.label.ICIconLabel
 
 <ICTextFieldPlain>:
     canvas.before:
@@ -161,7 +162,7 @@
         y: root.y + root.height - root._txt_top_pad - self.height - dp(5)
         size: dp(48), dp(48)
 
-<ICSearchInput>
+<ICSearchInput>:
     text_input: text_input
     orientation: 'horizontal'
     size_hint_y: None
@@ -205,98 +206,7 @@
 
 
 
-
 # --------------------------------------------------------------------------------------
-<TestScreen@NavigationLayout>:
-    id: nav_layout
-    MDNavigationDrawer:
-        id: nav_drawer
-        NavigationDrawerToolbar:
-            title: "Navigation Drawer"
-        NavigationDrawerIconButton:
-            icon: 'checkbox-blank-circle'
-            text: "Text Fields"
-            on_release: app.root.ids.scr_mngr.current = 'textfields'
-        NavigationDrawerIconButton:
-            icon: 'checkbox-blank-circle'
-            text: "Build Tester"
-            on_release: app.root.ids.scr_mngr.current = 'buildtester'
-    BoxLayout:
-        orientation: 'vertical'
-        Toolbar:
-            id: toolbar
-            title: 'KivyIC Text Fields'
-            md_bg_color: app.theme_cls.primary_color
-            background_palette: 'Primary'
-            background_hue: '500'
-            left_action_items: [['menu', lambda x: app.root.toggle_nav_drawer()]]
-            right_action_items: [['dots-vertical', lambda x: app.root.toggle_nav_drawer()]]
-        ScreenManager:
-            id: scr_mngr
-            Screen:
-                name: 'textfields'
-                GridLayout:
-                    cols: 1
-                    ScrollView:
-                        do_scroll_x: False
-                        MDList:
-                            OneLineListItem:
-                                text: 'OneLineListItem KivyMD'
-                            OneLineTextInputItem:
-                                text: 'OneLineTextInputItem KivyIC'
 
-                            TwoLineListItem:
-                                text: 'TwoLineListItem KivyMD'
-                                secondary_text: 'This is a song, and these are the words'
-                            TwoLineTextInputItem:
-                                text: 'TwoLineTextInputItem KivIC'
-                                secondary_text: 'This is a song, and these are the words'
 
-                            ThreeLineListItem:
-                                text: 'ThreeLineListItem KivyMD'
-                                secondary_text: 'This is a song, \\nand these are the words'
-                            ThreeLineTextInputItem:
-                                text: 'ThreeLineListItem KivyMD'
-                                secondary_text: 'This is a song, \\nand these are the words'
 
-                            OneLineIconListItem:
-                                text: "Single-line item with left icon KivyMD"
-                                IconLeftSampleWidget:
-                                    id: li_icon_1
-                                    icon: 'checkbox-blank-outline'
-                            OneLineIconTextInputItem:
-                                text: "Single-line item with left icon KivyIC"
-                                IconLeftSampleWidget:
-                                    id: li_icon_1
-                                    icon: 'checkbox-blank-outline'
-
-                            TwoLineIconListItem:
-                                text: "Two-line item... KivyMD"
-                                secondary_text: "...with left icon"
-                                IconLeftSampleWidget:
-                                    id: li_icon_2
-                                    icon: 'checkbox-blank-outline'
-                            TwoLineIconTextInputItem:
-                                text: "Two-line item... KivyIC"
-                                secondary_text: "...with left icon"
-                                IconLeftSampleWidget:
-                                    id: li_icon_2
-                                    icon: 'checkbox-blank-outline'
-
-                            ThreeLineIconListItem:
-                                text: "Three-line item... KivyMD"
-                                secondary_text: "...with left icon..." + '\\n' + "and third line!"
-                                IconLeftSampleWidget:
-                                    id: li_icon_3
-                                    icon: 'checkbox-blank-outline'
-                            ThreeLineIconTextInputItem:
-                                text: "Three-line item... KivyIC"
-                                secondary_text: "...with left icon..." + '\\n' + "and third line!"
-                                IconLeftSampleWidget:
-                                    id: li_icon_3
-                                    icon: 'checkbox-blank-outline'
-            Screen:
-                name: 'buildtester'
-                GridLayout:
-                    cols: 1
-                    ICSearchInput:

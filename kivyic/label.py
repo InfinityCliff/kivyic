@@ -1,13 +1,10 @@
 from kivy.lang import Builder
 
-from kivymd.label import MDLabel  # TODO assimilate MDLabel
+from kivyic import path
+from kivymd.label import MDLabel
 from kivy.properties import StringProperty
 
-from kivyic import path
-
-Builder.load_string('''
-#: include ''' + path + '''/label.kv
-''')
+Builder.load_file(path + '/label.kv')
 
 
 class ICIconLabel(MDLabel):

@@ -1,41 +1,30 @@
 # -*- coding: utf-8 -*-
 import sys
-from kivy.app import App
 from kivy.animation import Animation
 from kivy.lang import Builder
 from kivy.metrics import dp, sp
 
-from kivyic import path
+
 
 from kivy.properties import NumericProperty, StringProperty, BooleanProperty, ObjectProperty,\
                             OptionProperty, ListProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.textinput import TextInput
-# from kivy.uix.button import Button
-from kivy.factory import Factory
 from kivy.uix.behaviors.focus import FocusBehavior
 from kivy.uix.behaviors import ButtonBehavior
-from kivymd.theming import ThemableBehavior
 
+from kivyic.label import ICIconLabel  # not sure why but this is needed or will not find ICIconLabel
+from kivyic import path
+from kivymd.theming import ThemableBehavior
 from kivymd.ripplebehavior import RectangularRippleBehavior
 from kivymd.list import ILeftBody, ILeftBodyTouch, IRightBody, IRightBodyTouch
 from kivymd.button import MDIconButton
 from kivymd.textfields import TextfieldLabel
 from kivymd.selectioncontrols import MDCheckbox
-from kivymd.navigationdrawer import NavigationLayout
-from kivy.uix.gridlayout import GridLayout
-
-from kivymd.list import MDList, OneLineListItem, TwoLineListItem, ThreeLineListItem
-from kivymd.theming import ThemeManager
 import kivymd.material_resources as m_res
 
-Builder.load_string('''
-#: include dp kivy.metrics.dp
-
-#: include ''' + path + '''/textfields.kv
-''')
-# TODO - HERE - WHY DOES ICSEARCH INPUT NOT SHOW UP UNLESS IMPLICETLY PUT HERE
+Builder.load_file(path + '/textfields.kv')
 
 
 # TODO - on selection move cursor to end of line and no text selected
@@ -530,14 +519,3 @@ class ICSearchInput(ThemableBehavior, BoxLayout, FocusBehavior):
         self.focus = False
 
 
-class TextFields(App):
-    title = 'Text Fields'
-    theme_cls = ThemeManager()
-
-    def build(self):
-        main_widget = Factory.TestScreen()
-        main_widget.ids.scr_mngr.current = 'buildtester'
-        return main_widget
-
-if __name__ == '__main__':
-    TextFields().run()

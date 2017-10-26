@@ -9,6 +9,7 @@ main_kv = '''
 #:import NavigationDrawerToolbar kivymd.navigationdrawer.NavigationDrawerToolbar
 
 #:import OneLineTextInputItem kivyic.textfields.OneLineTextInputItem
+#:import ICFilterPanel kivyic.filteric.ICFilterPanel
 
 NavigationLayout:
     id: nav_layout
@@ -20,6 +21,12 @@ NavigationLayout:
             icon: 'checkbox-blank-circle'
             text: "Text Fields"
             on_release: app.root.ids.scr_mngr.current = 'textfields'
+        NavigationDrawerIconButton:
+            icon: 'checkbox-blank-circle'
+            text: "Filter"
+            on_release: 
+                app.root.build_sample_filter()
+                app.root.ids.scr_mngr.current = 'filter'
         NavigationDrawerIconButton:
             icon: 'checkbox-blank-circle'
             text: "blank"
@@ -100,10 +107,14 @@ NavigationLayout:
                                     id: li_icon_3
                                     icon: 'checkbox-blank-outline'
             Screen:
-                name: 'blank'
+                name: 'filter'
                 GridLayout:
                     cols: 1
-                    
+                    ICFilterPanel:
+            Screen:
+                name: 'blank'
+                GridLayout:
+                    cols: 1                    
 '''
 
 
@@ -113,7 +124,12 @@ class Sampler(App):
 
     def build(self):
         main_widget = Builder.load_string(main_kv)
+        main_widget.manager.current = 'filter'
         return main_widget
+
+    # TODO - HERE BUILDING FILTER PANEL
+    def build_sample_filter(self):
+        print('build')
 
 if __name__ == '__main__':
     Sampler().run()

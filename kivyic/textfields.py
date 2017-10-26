@@ -514,8 +514,8 @@ class ICSearchInput(ThemableBehavior, BoxLayout, FocusBehavior):
         pass
 
     def on_cancel(self):
-        print('on cancel')
         self.text_input.text = ''
         self.focus = False
 
-
+    def on_text(self, instance, value):
+        self.text = value

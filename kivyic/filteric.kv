@@ -1,0 +1,29 @@
+<FilterGroupButton>
+    rows: 1
+    MDLabel:
+        text: 'b'
+    MDIconButton:
+        icon: 'close'
+
+<FilterGroup>
+    rows: 1
+    MDLabel:
+        text: 'FG'
+        size_hint_x: 0.25
+    GridLayout:
+        id: container
+
+<ICFilterPanel>:
+    cols: 1
+    size_hint_y: None
+    height: self.minimum_height
+    canvas:
+        Color:
+            rgba: 0,0,1,.3
+        Rectangle:
+            size: self.size
+            pos: self.pos
+    MDLabel:
+        text: 'FILTERS'
+    MDList:
+        id: content

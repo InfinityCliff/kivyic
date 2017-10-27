@@ -1,5 +1,6 @@
 from kivy.app import App
 from kivy.lang import Builder
+from kivy.clock import Clock
 from kivymd.theming import ThemeManager
 
 main_kv = '''
@@ -24,9 +25,7 @@ NavigationLayout:
         NavigationDrawerIconButton:
             icon: 'checkbox-blank-circle'
             text: "Filter"
-            on_release: 
-                app.build_sample_filter()
-                app.root.ids.scr_mngr.current = 'filter'
+            on_release: app.root.ids.scr_mngr.current = 'filter'
         NavigationDrawerIconButton:
             icon: 'checkbox-blank-circle'
             text: "blank"
@@ -43,6 +42,12 @@ NavigationLayout:
             right_action_items: [['dots-vertical', lambda x: app.root.toggle_nav_drawer()]]
         ScreenManager:
             id: scr_mngr
+            Screen:
+                name: 'filter'
+                GridLayout:
+                    cols: 1
+                    ICFilterPanel:
+                        id: filter            
             Screen:
                 name: 'textfields'
                 GridLayout:
@@ -107,12 +112,6 @@ NavigationLayout:
                                     id: li_icon_3
                                     icon: 'checkbox-blank-outline'
             Screen:
-                name: 'filter'
-                GridLayout:
-                    cols: 1
-                    ICFilterPanel:
-                        id: filter
-            Screen:
                 name: 'blank'
                 GridLayout:
                     cols: 1                    
@@ -125,16 +124,14 @@ class Sampler(App):
 
     def build(self):
         main_widget = Builder.load_string(main_kv)
-        #self.root.ids.scr_mngr.current = 'filter'
+        self.build_sample_filter(main_widget)
         return main_widget
 
-    # TODO - HERE BUILDING FILTER PANEL
-    def build_sample_filter(self):
-        self.root.ids.filter.add_filter('Cat:', ['Work', 'Home'])
-        #self.root.ids.filter.add_filter('Sub:', ['Homework', 'Lawn care'])
-        #self.root.ids.filter.add_filter('Type:', ['pdf', 'txt'])
-        #self.root.ids.filter.add_filter('Cat:', ['Workshop', 'Home'])
-        print(self.root.ids.filter.filter_dict)
+    def build_sample_filter(self, widget):
+        widget.ids.filter.add_filter('Cat:', ['Work Work Work', 'Home'])
+        widget.ids.filter.add_filter('Sub:', ['Homework', 'Lawn care'])
+        widget.ids.filter.add_filter('Type:', ['pdf', 'txt'])
+        widget.ids.filter.add_filter('Cat:', ['Workshop', 'Home'])
 
 if __name__ == '__main__':
     Sampler().run()

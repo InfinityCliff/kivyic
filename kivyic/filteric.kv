@@ -1,20 +1,45 @@
 <FilterGroupButton>
     rows: 1
+    size_hint_x: None
+    width: '40dp'
+    canvas.after:
+        Color:
+            rgba: 0,1,0,.3
+        Rectangle:
+            size: self.size
+            pos: self.pos
     MDLabel:
-        text: 'b'
-    MDIconButton:
+        text: 'but'
+        size_hint_x: None
+        width: '30dp'
+    ICIconLabel:
         icon: 'close'
+        font_size: '15dp'
+        #text: 'X'
 
 <FilterGroup>
-    rows: 1
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: self.minimum_height
+    #spacing: '10dp'
     MDLabel:
+        id: lbl
         text: 'FG'
-        size_hint_x: 0.25
+        size_hint: None, None
+        width: '30dp'
+        height: '15dp'
     GridLayout:
-        id: container
+        rows: 1
+        id: button_container
+
+
+
 
 <ICFilterPanel>:
-    cols: 1
+    container: container
+    orientation: 'vertical'
+    padding: '10dp'
+    spacing: '10dp'
     size_hint_y: None
     height: self.minimum_height
     canvas:
@@ -26,4 +51,4 @@
     MDLabel:
         text: 'FILTERS'
     MDList:
-        id: content
+        id: container

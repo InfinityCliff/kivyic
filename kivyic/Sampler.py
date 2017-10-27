@@ -25,7 +25,7 @@ NavigationLayout:
             icon: 'checkbox-blank-circle'
             text: "Filter"
             on_release: 
-                app.root.build_sample_filter()
+                app.build_sample_filter()
                 app.root.ids.scr_mngr.current = 'filter'
         NavigationDrawerIconButton:
             icon: 'checkbox-blank-circle'
@@ -111,6 +111,7 @@ NavigationLayout:
                 GridLayout:
                     cols: 1
                     ICFilterPanel:
+                        id: filter
             Screen:
                 name: 'blank'
                 GridLayout:
@@ -124,12 +125,16 @@ class Sampler(App):
 
     def build(self):
         main_widget = Builder.load_string(main_kv)
-        main_widget.manager.current = 'filter'
+        #self.root.ids.scr_mngr.current = 'filter'
         return main_widget
 
     # TODO - HERE BUILDING FILTER PANEL
     def build_sample_filter(self):
-        print('build')
+        self.root.ids.filter.add_filter('Cat:', ['Work', 'Home'])
+        #self.root.ids.filter.add_filter('Sub:', ['Homework', 'Lawn care'])
+        #self.root.ids.filter.add_filter('Type:', ['pdf', 'txt'])
+        #self.root.ids.filter.add_filter('Cat:', ['Workshop', 'Home'])
+        print(self.root.ids.filter.filter_dict)
 
 if __name__ == '__main__':
     Sampler().run()

@@ -159,7 +159,7 @@ class GoogleLink(object):
                     new_filename, resumable=True)
 
             # Send the request to the API.
-            updated_file = self.service.files().update(
+            updated_file = self.service.files().update_panel_display(
                     fileId=file_id,
                     body=file,
                     media_body=media_body).execute()
@@ -198,7 +198,7 @@ class GoogleLink(object):
                     new_filename, mimetype=new_mime_type, resumable=True)
 
             # Send the request to the API.
-            updated_file = self.service.files().update(
+            updated_file = self.service.files().update_panel_display(
                     fileId=file_id,
                     body=file,
                     newRevision=new_revision,

@@ -13,7 +13,7 @@ from kivymd.theming import ThemeManager
 Builder.load_file(path + '/filteric.kv')
 
 
-class FilterGroupButton(ButtonBehavior, BoxLayout):
+class FilterTag(ButtonBehavior, BoxLayout):
     text = StringProperty()
     fg_button_label = ObjectProperty()  # X delete button
     tag_color = ListProperty()          # background color of filter tags
@@ -22,7 +22,7 @@ class FilterGroupButton(ButtonBehavior, BoxLayout):
     tag_border = ListProperty()         # color of border around tag
 
     def __init__(self, **kwargs):
-        super(FilterGroupButton, self).__init__(**kwargs)
+        super(FilterTag, self).__init__(**kwargs)
         self.text = kwargs.get('text', '')
         self.tag_color = kwargs.get('tag_color', [1, 1, 1, 1])
         self.tag_button_color = kwargs.get('tag_button_color', [0, 0, 1, 1])
@@ -31,7 +31,6 @@ class FilterGroupButton(ButtonBehavior, BoxLayout):
 
     def on_release(self):
         pass
-        #self.remove_widget(self)
 
 
 class FilterGroup(BoxLayout):
@@ -39,24 +38,30 @@ class FilterGroup(BoxLayout):
     name = StringProperty()
 
     def __init__(self, **kwargs):
+        self.register_event_type('on_delete_tag')
         super(FilterGroup, self).__init__(**kwargs)
         self.tag_spacing = dp(kwargs.get('tag_spacing', 5))
 
     def add_tags(self, tags):
         for tag in tags:
-            fgb = FilterGroupButton(text=tag)
-            self.ids.button_container.add_widget(fgb)
-            fgb.bind(on_release=self.delete_tag)
+            filter_tag = FilterTag(text=tag)
+            self.ids.button_container.add_widget(filter_tag)
+            filter_tag.bind(on_release=self.delete_tag)
 
-    def delete_tag(self, instance):
-        self.ids.button_container.remove_widget(instance)
+    def delete_tag(self, filter_tag):
+        self.ids.button_container.remove_widget(filter_tag)
+        self.dispatch('on_delete_tag', self.name, filter_tag.text)
+
+    def on_delete_tag(self, filter_group, filter_tag):
+        pass
 
     def on_name(self, instance, value):
         self.ids.lbl.text = value[:3].capitalize() + ':'
 
+
 class ICFilterPanel(BoxLayout):
     theme_cls = ThemeManager()
-    filter_dict = defaultdict(list)
+    filter_criteria_dict = defaultdict(list)
     container = ObjectProperty()  # ICFilter panel list
 
     spacing = NumericProperty(dp(2))
@@ -64,64 +69,63 @@ class ICFilterPanel(BoxLayout):
     background_color = ListProperty()
 
     def __init__(self, **kwargs):
+        self.register_event_type('on_empty_filter_list')
         super(ICFilterPanel, self).__init__(**kwargs)
         self.padding = [dp(5), dp(10), dp(5), dp(5)]
         self.kwargs_ = kwargs
         self.background_color = kwargs.get('background_color', [1, 1, 1, 1])
 
-    def add_filter(self, text, filter_):
-        filter_list = sorted(list(set(filter_).difference(set(self.filter_dict[text]))))  # only add unique items
-        self.filter_dict[text].extend(filter_list)
-        self.update()
+    def on_empty_filter_list(self, *args):
+        pass
 
-    def update(self):
+    def add_filter(self, text, filter_):
+        filter_list = sorted(list(set(filter_).difference(set(self.filter_criteria_dict[text]))))  # only add unique items
+        self.filter_criteria_dict[text].extend(filter_list)
+        self.update_panel_display()
+
+    def _remove_filter_group(self):
+        # to remove the group from the display panel
+        pass
+
+    def _remove_filter_criteria(self, instance, filter_group, filter_tag):
+        #print('_remove_filter_criteria: ', filter_group, filter_tag)
+        #print(self.filter_criteria_dict)
+        self.filter_criteria_dict[filter_group].remove(filter_tag)
+        if len(self.filter_criteria_dict[filter_group]) == 0:
+            del self.filter_criteria_dict[filter_group]
+        #print(self.filter_criteria_dict)
+        self.update_panel_display()
+
+    def update_panel_display(self, *largs):
+        print('update')
+        print(self.filter_criteria_dict.items())
         self.container.clear_widgets()
-        for group, filter_vals in self.filter_dict.items():
-            fg = FilterGroup()
-            fg.name = group
-            fg.add_tags(filter_vals)
-            #for val in filter_vals:
-            #    fgb = FilterGroupButton(text=val)
-            #    fg.ids.button_container.add_widget(fgb)
-            #    fgb.bind(on_release=self.delete_tag)
-            self.container.add_widget(fg)
-        self.height = self.minimum_height
+        if len(self.filter_criteria_dict.items()):
+            for group, filter_vals in self.filter_criteria_dict.items():
+                fg = FilterGroup()
+                fg.name = group
+                fg.add_tags(filter_vals)
+                fg.bind(on_delete_tag=self._remove_filter_criteria)
+                self.container.add_widget(fg)
+            self.height = self.minimum_height
+        else:
+            self.dispatch('on_empty_filter_list')
 
     def apply_filter(self, data):
-        lst = []
+        """
+        filtes data on previously selected filter criteria
+        :param data: dict {'unique identifier': {'filter criteria name': [criteria list]}}
+        :return: Sorted list
+        """
+        filtered_list = []
         for item, criterion in data.items():
-            add_file = False
-            #print('------------------------------')
-            #print(criterion['name'], criterion)
-            #print(self.filter_dict)
-            for f_group, f in self.filter_dict.items():
-                if len(set(criterion[f_group]) & set(f)) >= len(set(f)):
-                    add_file = True
+            add_item = False
+            for filter_group, filter_tags in self.filter_criteria_dict.items():
+                if len(set(criterion[filter_group]) & set(filter_tags)) >= len(set(filter_tags)):
+                    add_item = True
                 else:
-                    add_file = False
-            #print('add file: ', add_file)
-            if add_file:
-                lst.append(criterion['name'])
+                    add_item = False
+            if add_item:
+                filtered_list.append(criterion['name'])
 
-        print(sorted(lst))
-        return sorted(lst)
-
-        #filter_cat = False
-        #filter_sub = False
-        #filter_type = False
-        #app = App.get_running_app()
-        #meta = app.METADATA[os.path.join(LOCAL_STORAGE_PATH, item[0].upper(), item)]
-
-        #if len(self.filter_dict['category']) == 0 or \
-        #        (len(set(self.filter_dict['category']) & set(meta['category'])) >= len(self.filter_dict['category'])):
-        #    filter_cat = True
-
-        #if len(self.filter_dict['subject']) == 0 or \
-        #        (len(set(self.filter_dict['subject']) & set(meta['subject'])) >= len(self.filter_dict['subject'])):
-        #    filter_sub = True
-
-        #if len(self.filter_dict['type']) == 0 or \
-        #        (len(set(self.filter_dict['type']) & set(meta['type'])) >= len(self.filter_dict['type'])):
-        #    filter_type = True
-
-        #return all([filter_cat, filter_sub, filter_type])
+        return sorted(filtered_list)

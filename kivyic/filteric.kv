@@ -6,18 +6,24 @@
     width: self.minimum_width
     canvas.before:
         Color:
-            rgba: 1,1,1,1
+            rgba: root.tag_color
         RoundedRectangle:
             size: self.size
             pos: self.pos
             radius:  [(5.0, 5.0), (0, 0), (0, 0), (5.0, 5.0)]
+        #Color:
+        #    rgba: root.tag_border
+        #Line:
+        #    points: (self.x, self.y, self.x + self.width, self.y, self.x + self.width, self.y + self.height, self.x, self.y + self.height)
+        #    close: True
+        #    width: 0.3
     Label:
         id: fg_button_label
         text: root.text
         font_size: '10dp'
         size_hint_x: None
         width: self.texture_size[0] + dp(5)
-        color: 0,0,0,1
+        color: root.tag_font_color
         font_name: 'DejaVuSans'
         on_text:
             self.update_texture()
@@ -25,7 +31,7 @@
     ICIconLabel:
         icon: 'close-box'
         font_size: '15dp'
-        color: 0,0,1,1
+        color: root.tag_button_color
 
 <FilterGroup>
     orientation: 'horizontal'
@@ -51,10 +57,14 @@
     height: self.minimum_height
     canvas:
         Color:
-            rgba: 0,0,1,.3
+            rgba: root.background_color
         Rectangle:
             size: self.size
             pos: self.pos
+        Color:
+            rgba: self.theme_cls.divider_color
+        Line:
+            points: (self.x, self.y, self.x + self.width, self.y)
     MDLabel:
         text: 'FILTERS'
     MDList:

@@ -1,0 +1,185 @@
+#:import MDLabel kivymd.label.MDLabel
+#:import MDDropdownMenu kivymd.menu.MDDropdownMenu
+
+<InputDialog>:
+    size_hint_y: None
+    multiline: True
+    hint_text: root.hint_text
+    helper_text: root.helper_text
+    helper_text_mode: "persistent"
+
+<EditNotesPopup>:
+    size_hint: .8, None
+    height: dp(400)
+    auto_dismiss: False
+
+<DialogOKDismiss>:
+    size_hint: .8, None
+    height: dp(400)
+    auto_dismiss: False
+
+<ICDialog>:
+    canvas.before:
+        Color:
+            rgba: self.theme_cls.bg_light
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    _container: container
+    _action_area:action_area
+    elevation: 12
+    GridLayout:
+        cols: 1
+        GridLayout:
+            cols: 1
+            padding: dp(24), dp(24), dp(24), dp(24)
+            spacing: dp(20)
+            MDLabel:
+                text: root.title
+                font_style: 'Title'
+                theme_text_color: 'Primary'
+                halign: 'left'
+                valign: 'middle'
+                size_hint_y: None
+                text_size: self.width, None
+                height: self.texture_size[1]
+            BoxLayout:
+                #effect_cls: 'ScrollEffect'
+                BoxLayout:
+                    #size_hint_y: None
+                    #height: self.minimum_height
+                    id: container
+        AnchorLayout:
+            anchor_x: 'right'
+            anchor_y: 'center'
+            size_hint: 1, None
+            height: dp(52) if len(root._action_buttons) > 0 else 0
+            padding: dp(8), dp(8)
+            GridLayout:
+                id: action_area
+                rows: 1
+                size_hint: None, None if len(root._action_buttons) > 0 else 1
+                height: dp(36) if len(root._action_buttons) > 0 else 0
+                width: self.minimum_width
+                spacing: dp(8)
+
+<DialogFileView>:
+    size_hint: 0.9, 0.9
+
+
+
+<FileChooserDialogView>:
+    dir_layout_controller: dir_layout_controller
+    file_layout_controller: file_layout_controller
+    orientation: 'vertical'
+    BoxLayout: # Row 1
+        orientation: 'horizontal'
+        spacing: '5dp'
+        size_hint_y: None
+        height: '30dp'
+        TextInput:
+            id: path_ti
+            text: 'Path'
+            text_size: self.size
+            halign: 'left'
+            multiline: False
+            on_text_validate: root.update(self.text)
+        TextInput:
+            text: 'Search Documents'
+            text_size: self.size
+            size_hint_x: 0.3
+            halign: 'right'
+    BoxLayout: # Row 2
+        orientation: 'horizontal'
+        FileChooser:
+            id: dir_layout_controller
+            filters: [dir_layout.is_dir]
+            FileLayout
+                id: dir_layout
+                on_entries_cleared: root.update(self.controller.path)
+        FileChooser:
+            id: file_layout_controller
+            filter_dirs: True
+            filters: [file_layout.is_file]
+            FileLayout
+                id: file_layout
+
+    BoxLayout: # Row 3
+        orientation: 'horizontal'
+        size_hint_y: None
+        height: '30dp'
+        spacing: '5dp'
+        Label:
+            text: 'File name:'
+            halign: 'right'
+            valign: 'center'
+            text_size: self.size
+        TextInput:
+            text: 'selected file...'
+            text_size: self.size
+        MDFlatButton:
+            text: 'All files (*.*)'
+            size_hint_y: None
+            height: self.parent.height
+            on_release: MDDropdownMenu(items=root.file_type_filters, width_mult=4, on_release=root.update_filter(self.text)).open(self)
+
+
+
+<FileLayout>:
+# treeview to display lisr of files/dirs, uses FileView template
+    on_entry_added: treeview.add_node(args[1])
+    on_entries_cleared: treeview.root.nodes = []
+    on_subentry_to_entry: not args[2].locked and treeview.add_node(args[1], args[2])
+    on_remove_subentry: args[2].nodes = []
+    BoxLayout: # Row 2
+        orientation: 'horizontal'
+        ScrollView:
+            id: scrollview
+            do_scroll_x: False
+            Scatter:
+                do_rotation: False
+                do_scale: False
+                do_translation: False
+                size: treeview.size
+                size_hint_y: None
+                TreeView:
+                    id: treeview
+                    hide_root: True
+                    size_hint_y: None
+                    width: scrollview.width
+                    height: self.minimum_height
+                    on_node_expand: root.controller.entry_subselect(args[1])
+                    on_node_collapse: root.controller.close_subselection(args[1])
+
+[FileView@FloatLayout+TreeViewNode]:
+# used by FileLayout class to determine what is displayed in panel showing the list of files/dirs
+    locked: False
+    entries: []
+    path: ctx.path
+    # FIXME: is_selected is actually a read_only treeview property. In this
+    # case, however, we're doing this because treeview only has single-selection
+    # hardcoded in it. The fix to this would be to update treeview to allow
+    # multiple selection.
+    is_selected: self.path in ctx.controller().selection
+
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: '48dp' if dp(1) > 1 else '24dp'
+    # Don't allow expansion of the ../ node
+    is_leaf: not ctx.isdir or ctx.name.endswith('..' + ctx.sep) or self.locked
+    on_touch_down: self.collide_point(*args[1].pos) and ctx.controller().entry_touched(self, args[1])
+    on_touch_up: self.collide_point(*args[1].pos) and ctx.controller().entry_released(self, args[1])
+
+
+    BoxLayout:
+        pos: root.pos
+        size_hint_x: None
+        width: root.width - dp(10)
+        Label:
+            id: filename
+            text_size: self.width, None
+            halign: 'left'
+            shorten: True
+            text: ctx.name
+            #color: 0,0,1,1

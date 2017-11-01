@@ -97,7 +97,6 @@ class ICFilterPanel(BoxLayout):
         self.update_panel_display()
 
     def update_panel_display(self, *largs):
-        print('update')
         print(self.filter_criteria_dict.items())
         self.container.clear_widgets()
         if len(self.filter_criteria_dict.items()):

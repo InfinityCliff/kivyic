@@ -1,7 +1,9 @@
 from kivy.app import App
 from kivy.lang import Builder
-from kivy.clock import Clock
+
 from kivymd.theming import ThemeManager
+
+from kivyic.dialog import DialogFileView
 
 main_kv = '''
 #:import MDNavigationDrawer kivymd.navigationdrawer.MDNavigationDrawer
@@ -26,6 +28,10 @@ NavigationLayout:
             icon: 'checkbox-blank-circle'
             text: "Filter"
             on_release: app.root.ids.scr_mngr.current = 'filter'
+        NavigationDrawerIconButton:
+            icon: 'checkbox-blank-circle'
+            text: "Dialogs"
+            on_release: app.root.ids.scr_mngr.current = 'dialogs'            
         NavigationDrawerIconButton:
             icon: 'checkbox-blank-circle'
             text: "blank"
@@ -112,9 +118,21 @@ NavigationLayout:
                                     id: li_icon_3
                                     icon: 'checkbox-blank-outline'
             Screen:
+                name: 'dialogs'
+                GridLayout:
+                    cols: 1
+                    Button:
+                        size_hint: None, None
+                        height: '48dp'
+                        width: '100dp'
+                        pos_hint: {'center_x': 0.5}
+                        text: 'File Chooser'
+                        on_release: app.open_file_dialog() 
+                                       
+            Screen:
                 name: 'blank'
                 GridLayout:
-                    cols: 1                    
+                    cols: 1 
 '''
 
 
@@ -126,6 +144,11 @@ class Sampler(App):
         main_widget = Builder.load_string(main_kv)
         self.build_sample_filter(main_widget)
         return main_widget
+
+    def open_file_dialog(self):
+        d = DialogFileView()
+        d.add_button({'cancel': d.dismiss})
+        d.open()
 
     def build_sample_filter(self, widget):
         widget.ids.filter.add_filter('Cat:', ['Work Work Work', 'Home'])

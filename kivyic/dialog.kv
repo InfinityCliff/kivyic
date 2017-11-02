@@ -104,7 +104,6 @@
             filters: [file_layout.is_file]
             FileLayout
                 id: file_layout
-
     BoxLayout: # Row 3
         orientation: 'horizontal'
         size_hint_y: None
@@ -122,8 +121,7 @@
             text: 'All files (*.*)'
             size_hint_y: None
             height: self.parent.height
-            on_release: MDDropdownMenu(items=root.file_type_filters, width_mult=4, on_release=root.update_filter(self.text)).open(self)
-
+            on_release: root.open_filter_menu(self)
 
 
 <FileLayout>:

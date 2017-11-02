@@ -21,6 +21,8 @@ from kivymd.textfields import MDTextField
 from kivymd.theming import ThemableBehavior
 from kivymd.elevationbehavior import RectangularElevationBehavior
 from kivymd.button import MDFlatButton
+from kivymd.menu import MDDropdownMenu
+
 Builder.load_file(path + '/dialog.kv')
 
 
@@ -224,6 +226,14 @@ class FileChooserDialogView(BoxLayout):
     def update_filter(self, new_filter):
         print(new_filter.split()[-1])
         #self.file_layout_controller.filters = [self.ids.file_layout.is_file, new_filter]
+
+    def open_filter_menu(self, mainbutton):
+        dropdown = MDDropdownMenu(items=self.file_type_filters, width_mult=4)
+        #dropdown.bind(on_release=self.update_filter(dropdown.text))
+        dropdown.bind(on_select=lambda instance, x: self.update_filter(x))
+        dropdown.bind(on_select=lambda instance, x: setattr(mainbutton, 'text', x))
+        dropdown.open()
+
 
 class DialogFileView(ICDialog):
     title = StringProperty()                # dialog box title

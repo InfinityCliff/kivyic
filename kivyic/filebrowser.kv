@@ -1,0 +1,156 @@
+#:kivy 1.2.0
+#:import metrics kivy.metrics
+#:import abspath os.path.abspath
+#:import MDLabel kivymd.label.MDLabel
+#:import MDFlatButton kivymd.button.MDFlatButton
+
+<TreeLabel>:
+    on_touch_down:
+        root.dispatch('on_change_path', self.path)
+    on_is_open: self.is_open and self.parent.trigger_populate(self)
+    even_color: .9, .9, 1, 1
+    odd_color: 1, 1, 1, 1
+    color: 0,0,0,1
+
+<FileExplorer>:
+    file_layout_controller: file_layout_controller
+    filter_button: filter_button
+    orientation: 'vertical'
+    canvas.before:
+        Color:
+            rgba: .9,.9,.9,1
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+    BoxLayout: # Row 1
+        orientation: 'horizontal'
+        spacing: '5dp'
+        size_hint_y: None
+        height: '30dp'
+        TextInput:
+            id: path_ti
+            text: 'Path'
+            text_size: self.size
+            halign: 'left'
+            multiline: False
+            on_text_validate: root.update_path(self, self.text)
+        TextInput:
+            text: 'Search Documents'
+            text_size: self.size
+            size_hint_x: 0.3
+            halign: 'right'
+    BoxLayout: # Row 2
+        orientation: 'horizontal'
+        Splitter:
+            sizable_from: 'right'
+            min_size: '153sp'
+            size_hint: (.2, 1)
+            id: splitter
+            ScrollView:
+                LinkTree:
+                    id: link_tree
+                    hide_root: True
+                    #browser: tabbed_browser
+                    size_hint_y: None
+                    height: self.minimum_height
+                    on_parent: self.fill_tree(root.favorites)
+                    root_options: {'text': 'Locations', 'no_selection':True}
+        FileChooser:
+            id: file_layout_controller
+            filter_dirs: True
+            filters: [file_layout.is_file]
+            rootpath: ''
+            FileLayout
+                id: file_layout
+                path: root.path
+                filters: root.filters
+                filter_dirs: root.filter_dirs
+                show_hidden: root.show_hidden
+                multiselect: root.multiselect
+                dirselect: root.dirselect
+                rootpath: root.rootpath
+                on_submit: root.dispatch('on_submit')
+                #on_submit: root.update_file(os.path.normpath(self.selected))
+    BoxLayout: # Row 3
+        orientation: 'horizontal'
+        size_hint_y: None
+        height: '30dp'
+        spacing: '5dp'
+        MDLabel:
+            text: 'File name:'
+            halign: 'right'
+            valign: 'center'
+            text_size: self.size
+        MDLabel:
+            id: selected_file
+            halign: 'left'
+            valign: 'center'
+            text: 'selected file...'
+            text_size: self.size
+        MDFlatButton:
+            id: filter_button
+            text: 'All files (*.*)'
+            size_hint_y: None
+            height: self.parent.height
+            on_release: root.dropdown.open(self)
+
+
+<FileLayout>:
+# treeview to display lisr of files/dirs, uses FileView template
+    on_entry_added: treeview.add_node(args[1])
+    on_entries_cleared: treeview.root.nodes = []
+    on_subentry_to_entry: not args[2].locked and treeview.add_node(args[1], args[2])
+    on_remove_subentry: args[2].nodes = []
+    BoxLayout: # Row 2
+        orientation: 'horizontal'
+        ScrollView:
+            id: scrollview
+            do_scroll_x: False
+            Scatter:
+                do_rotation: False
+                do_scale: False
+                do_translation: False
+                size: treeview.size
+                size_hint_y: None
+                TreeView:
+                    id: treeview
+                    hide_root: True
+                    size_hint_y: None
+                    width: scrollview.width
+                    height: self.minimum_height
+                    on_node_expand: root.controller.entry_subselect(args[1])
+                    on_node_collapse: root.controller.close_subselection(args[1])
+
+[FileView@FloatLayout+TreeViewNode]:
+# used by FileLayout class to determine what is displayed in panel showing the list of files/dirs
+    locked: False
+    entries: []
+    path: ctx.path
+    # FIXME: is_selected is actually a read_only treeview property. In this
+    # case, however, we're doing this because treeview only has single-selection
+    # hardcoded in it. The fix to this would be to update treeview to allow
+    # multiple selection.
+    is_selected: self.path in ctx.controller().selection
+
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: '48dp' if dp(1) > 1 else '24dp'
+    # Don't allow expansion of the ../ node
+    is_leaf: not ctx.isdir or ctx.name.endswith('..' + ctx.sep) or self.locked
+    on_touch_down: self.collide_point(*args[1].pos) and ctx.controller().entry_touched(self, args[1])
+    on_touch_up: self.collide_point(*args[1].pos) and ctx.controller().entry_released(self, args[1])
+    even_color: .9, .9, 1, 1
+    odd_color: 1, 1, 1, 1
+
+    BoxLayout:
+        pos: root.pos
+        size_hint_x: None
+        width: root.width - dp(10)
+        MDLabel:
+            id: filename
+            text_size: self.width, None
+            halign: 'left'
+            shorten: True
+            text: ctx.name
+            #color: 0,0,1,1

@@ -3,7 +3,9 @@ from kivy.lang import Builder
 
 from kivymd.theming import ThemeManager
 
-from kivyic.dialog import DialogFileView
+from kivyic.dialog import FileExplorerDialog, ICDialog
+
+from kivy.garden.filebrowser import LinkTree
 
 main_kv = '''
 #:import MDNavigationDrawer kivymd.navigationdrawer.MDNavigationDrawer
@@ -120,15 +122,14 @@ NavigationLayout:
             Screen:
                 name: 'dialogs'
                 GridLayout:
-                    cols: 1
+                    rows: 1
                     Button:
                         size_hint: None, None
                         height: '48dp'
                         width: '100dp'
                         pos_hint: {'center_x': 0.5}
-                        text: 'File Chooser'
+                        text: 'File Explorer'
                         on_release: app.open_file_dialog() 
-                                       
             Screen:
                 name: 'blank'
                 GridLayout:
@@ -146,7 +147,7 @@ class Sampler(App):
         return main_widget
 
     def open_file_dialog(self):
-        d = DialogFileView()
+        d = FileExplorerDialog()
         d.add_button({'cancel': d.dismiss})
         d.open()
 

@@ -9,12 +9,15 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.properties import ObjectProperty, NumericProperty, StringProperty, ListProperty
 from kivy.uix.filechooser import FileChooserListLayout
 from kivy.animation import Animation
-from kivy.uix.filechooser import FileChooserController, FileChooserLayout, FileChooser
+
 from kivy.uix.modalview import ModalView
 from kivy.uix.popup import PopupException
 from kivy.graphics import Rectangle, Color
+from kivy.uix.dropdown import DropDown
+from kivy.uix.button import Button
 
 from kivyic import path
+from kivyic.filebrowser import FileExplorer, get_home_directory
 
 from kivymd.dialog import MDDialog
 from kivymd.textfields import MDTextField
@@ -57,9 +60,19 @@ class EditNotesPopup(MDDialog):
 
 
 class ICDialog(ThemableBehavior, RectangularElevationBehavior, ModalView):
-    title = StringProperty('')
+    title = StringProperty('KivyIC Dialog Box')
+    '''Title of the Dialog Box.
+
+    :attr:`title` is an :class:`~kivy.properties.StringProperty` and
+    defaults to 'KivyIC Dialog Box'.
+    '''
 
     content = ObjectProperty(None)
+    '''Container widget for what will be displayed in the Dialog Box.
+
+    :attr:`content` is an :class:`~kivy.properties.ObjectProperty` and
+    defaults to None.
+    '''
 
     md_bg_color = ListProperty([0, 0, 0, .2])
 
@@ -175,67 +188,7 @@ class ICDialog(ThemableBehavior, RectangularElevationBehavior, ModalView):
             self._action_area.add_widget(btn)
 
 
-class FileLayout(FileChooserLayout):
-    VIEWNAME = 'fileview'
-    _ENTRY_TEMPLATE = 'FileView'
-    slave_layout = ObjectProperty()
-
-    def __init__(self, **kwargs):
-        super(FileLayout, self).__init__(**kwargs)
-        self.fbind('on_entries_cleared', self.scroll_to_top)
-
-    def scroll_to_top(self, *args):
-        self.ids.scrollview.scroll_y = 1.0
-
-    def is_dir(self, directory, filename):
-        return os.path.isdir(os.path.join(directory, filename))
-
-    def is_file(self, directory, filename):
-        return os.path.isfile(os.path.join(directory, filename))
-
-
-class FileChooserDialogView(BoxLayout):
-    dir_layout_controller = ObjectProperty()
-    file_layout_controller = ObjectProperty()
-    file_type_filters = [
-        {'viewclass': 'MDMenuItem',
-         'text': 'All Files (*.*)'},
-        {'viewclass': 'MDMenuItem',
-         'text': 'PDF Files (*.pdf)'},
-        {'viewclass': 'MDMenuItem',
-         'text': 'Text Files (*.txt)'},
-        {'viewclass': 'MDMenuItem',
-         'text': 'Example item'},
-        {'viewclass': 'MDMenuItem',
-         'text': 'Example item'},
-        {'viewclass': 'MDMenuItem',
-         'text': 'Example item'},
-        {'viewclass': 'MDMenuItem',
-         'text': 'Example item'}]
-
-    def __init__(self, **kwargs):
-        super(FileChooserDialogView, self).__init__(**kwargs)
-        self.ids.path_ti.text = self.file_layout_controller.path
-
-    def update(self, new_path):
-        new_path = os.path.abspath(new_path)
-        self.dir_layout_controller.path = new_path
-        self.file_layout_controller.path = new_path
-        self.ids.path_ti.text = self.dir_layout_controller.path
-
-    def update_filter(self, new_filter):
-        print(new_filter.split()[-1])
-        #self.file_layout_controller.filters = [self.ids.file_layout.is_file, new_filter]
-
-    def open_filter_menu(self, mainbutton):
-        dropdown = MDDropdownMenu(items=self.file_type_filters, width_mult=4)
-        #dropdown.bind(on_release=self.update_filter(dropdown.text))
-        dropdown.bind(on_select=lambda instance, x: self.update_filter(x))
-        dropdown.bind(on_select=lambda instance, x: setattr(mainbutton, 'text', x))
-        dropdown.open()
-
-
-class DialogFileView(ICDialog):
+class FileExplorerDialog(ICDialog):
     title = StringProperty()                # dialog box title
     initial_directory = StringProperty()    # starting directory for file dialog
     filter = ListProperty()                 # file filter list
@@ -244,8 +197,14 @@ class DialogFileView(ICDialog):
     file_name = StringProperty()            # Name of selected file
 
     def __init__(self, **kwargs):
-        super(DialogFileView, self).__init__(**kwargs)
-        self.content = FileChooserDialogView()
+        super(FileExplorerDialog, self).__init__(**kwargs)
+        user_path = os.path.join(get_home_directory(), 'Documents')
+        self.content = FileExplorer()
+        #self.content = FileExplorer(select_string='Select',
+        #                            favorites=[(user_path, 'Documents')])
+        #self.content.bind(on_success=self._fbrowser_success,
+        #          on_canceled=self._fbrowser_canceled,
+        #          on_submit=self._fbrowser_submit)
 
     def add_button(self, buttons):
         for text, action in buttons.items():

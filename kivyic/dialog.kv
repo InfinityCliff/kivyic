@@ -31,8 +31,10 @@
     _action_area:action_area
     elevation: 12
     GridLayout:
+        id: a
         cols: 1
         GridLayout:
+            id: b
             cols: 1
             padding: dp(24), dp(24), dp(24), dp(24)
             spacing: dp(20)
@@ -46,6 +48,7 @@
                 text_size: self.width, None
                 height: self.texture_size[1]
             BoxLayout:
+                id: box
                 #effect_cls: 'ScrollEffect'
                 BoxLayout:
                     #size_hint_y: None
@@ -66,6 +69,7 @@
                 spacing: dp(8)
 
 <FileExplorerDialog>:
+    id: fileexplorerdialog
     size_hint: 0.9, 0.9
     #background_color: 0,0,1,1
     background: ''

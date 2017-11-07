@@ -1,6 +1,6 @@
 from kivy.app import App
 from kivy.lang import Builder
-
+import time
 from kivymd.theming import ThemeManager
 
 from kivyic.dialog import FileExplorerDialog, ICDialog
@@ -147,6 +147,7 @@ class Sampler(App):
         return main_widget
 
     def open_file_dialog(self):
+        #time.sleep(5)
         d = FileExplorerDialog()
         d.add_button({'cancel': d.dismiss})
         d.open()

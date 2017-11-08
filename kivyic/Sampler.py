@@ -2,10 +2,14 @@ from kivy.app import App
 from kivy.lang import Builder
 import time
 from kivymd.theming import ThemeManager
+from kivyic.filebrowser import FileExplorer, get_home_directory
+from kivy.uix.modalview import ModalView
 
 from kivyic.dialog import FileExplorerDialog, ICDialog
-
+from kivyic import path
 from kivy.garden.filebrowser import LinkTree
+
+#Builder.load_file(path + '/filebrowser.kv')
 
 main_kv = '''
 #:import MDNavigationDrawer kivymd.navigationdrawer.MDNavigationDrawer
@@ -15,6 +19,8 @@ main_kv = '''
 
 #:import OneLineTextInputItem kivyic.textfields.OneLineTextInputItem
 #:import ICFilterPanel kivyic.filteric.ICFilterPanel
+#:import FileExplorer kivyic.filebrowser.FileExplorer
+#:import get_home_directory kivyic.filebrowser.get_home_directory
 
 NavigationLayout:
     id: nav_layout
@@ -33,7 +39,11 @@ NavigationLayout:
         NavigationDrawerIconButton:
             icon: 'checkbox-blank-circle'
             text: "Dialogs"
-            on_release: app.root.ids.scr_mngr.current = 'dialogs'            
+            on_release: app.root.ids.scr_mngr.current = 'dialogs'    
+        NavigationDrawerIconButton:
+            icon: 'checkbox-blank-circle'
+            text: "File Explorer"
+            on_release: app.root.ids.scr_mngr.current = 'fileexplorer'                    
         NavigationDrawerIconButton:
             icon: 'checkbox-blank-circle'
             text: "blank"
@@ -122,6 +132,7 @@ NavigationLayout:
             Screen:
                 name: 'dialogs'
                 GridLayout:
+                    id: dialogs_grid
                     rows: 1
                     Button:
                         size_hint: None, None
@@ -130,6 +141,13 @@ NavigationLayout:
                         pos_hint: {'center_x': 0.5}
                         text: 'File Explorer'
                         on_release: app.open_file_dialog() 
+            Screen:
+                name: 'fileexplorer'
+                GridLayout:
+                    rows: 1
+                    Button: 
+                        text: 'File Explorer'
+                        on_release: app.open_file_dialog()
             Screen:
                 name: 'blank'
                 GridLayout:
@@ -147,10 +165,16 @@ class Sampler(App):
         return main_widget
 
     def open_file_dialog(self):
-        #time.sleep(5)
-        d = FileExplorerDialog()
-        d.add_button({'cancel': d.dismiss})
-        d.open()
+        #user_path = get_home_directory()
+        mv = ModalView(size_hint=(.8,.8))
+        #fe = FileExplorer(select_string='Select',
+        #                  favorites=[(user_path, 'Documents')])
+        fe = FileExplorer()
+        #fe.bind(on_success=self._fbrowser_success,
+        #        on_canceled=self._fbrowser_canceled,
+        #        on_submit=self._fbrowser_submit)
+        mv.add_widget(fe)
+        mv.open()
 
     def build_sample_filter(self, widget):
         widget.ids.filter.add_filter('Cat:', ['Work Work Work', 'Home'])

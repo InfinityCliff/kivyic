@@ -22,7 +22,8 @@ from kivyic.filebrowser import FileExplorer, get_home_directory
 
 from kivymd.dialog import MDDialog
 from kivymd.textfields import MDTextField
-from kivymd.theming import ThemableBehavior
+from kivymd.theming import ThemableBehavior, ThemeManager
+
 from kivymd.elevationbehavior import RectangularElevationBehavior
 from kivymd.button import MDFlatButton
 from kivymd.menu import MDDropdownMenu
@@ -166,19 +167,14 @@ class ICDialog(ThemableBehavior, RectangularElevationBehavior, ModalView):
         return self
 
     def on_content(self, instance, value):
-        print('on_content')
         if self._container:
             self._container.clear_widgets()
             self._container.add_widget(value)
 
     def on__container(self, instance, value):
-        print('on__container')
         if value is None or self.content is None:
             return
         self._container.clear_widgets()
-        print(self.content.parent)
-        print(self.content.parent.id)
-        print(self.content.id)
         self._container.add_widget(self.content)
 
     def on_touch_down(self, touch):
@@ -205,14 +201,14 @@ class FileExplorerDialog(ICDialog):
     def __init__(self, **kwargs):
         super(FileExplorerDialog, self).__init__(**kwargs)
         user_path = os.path.join(get_home_directory(), 'Documents')
-        fe = FileExplorer()
-        self.content = fe
-        print('added fe')
-        #self.content = FileExplorer(select_string='Select',
-        #                            favorites=[(user_path, 'Documents')])
-        #self.content.bind(on_success=self._fbrowser_success,
-        #          on_canceled=self._fbrowser_canceled,
-        #          on_submit=self._fbrowser_submit)
+
+        fe = FileExplorer(select_string='Select',
+                           favorites=[(user_path, 'Documents')])
+
+        #fe.bind(on_success=self._fbrowser_success,
+        #        on_canceled=self._fbrowser_canceled,
+        #        on_submit=self._fbrowser_submit)
+        self.add_widget(fe)
 
     def add_button(self, buttons):
         for text, action in buttons.items():
@@ -247,23 +243,22 @@ class DialogOKDismiss(MDDialog):
         self.dismiss()
 
 
-class DialogApp(App):
-    title = 'Dialog App'
-    #theme_cls = ThemeManager()
+class TestgApp(App):
+    title = 'Dialog Test App'
+    theme_cls = ThemeManager()
 
     def build(self):
-        #main_widget = Builder.load_string(main_kv)
-        #self.build_sample_filter(main_widget)
         self.root = BoxLayout()
-        #self.root.add_widget(FileExplorer())
         self.open_file_dialog()
         return self.root
 
     def open_file_dialog(self):
         #time.sleep(5)
         d = FileExplorerDialog()
+        #d.content = FileExplorer()
+        #print(d._container.size)
         d.add_button({'cancel': d.dismiss})
         d.open()
 
 if __name__ == '__main__':
-    DialogApp().run()
+    TestgApp().run()

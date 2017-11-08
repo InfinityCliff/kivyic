@@ -31,10 +31,10 @@
     _action_area:action_area
     elevation: 12
     GridLayout:
-        id: a
+        id: 'a'
         cols: 1
         GridLayout:
-            id: b
+            id: 'b'
             cols: 1
             padding: dp(24), dp(24), dp(24), dp(24)
             spacing: dp(20)
@@ -49,10 +49,10 @@
                 height: self.texture_size[1]
             BoxLayout:
                 id: box
-                #effect_cls: 'ScrollEffect'
+                effect_cls: 'ScrollEffect'
                 BoxLayout:
-                    #size_hint_y: None
-                    #height: self.minimum_height
+                    size_hint_y: None
+                    height: self.minimum_height
                     id: container
         AnchorLayout:
             anchor_x: 'right'

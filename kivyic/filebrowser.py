@@ -73,7 +73,7 @@ from kivy.lang import Builder
 from kivy.utils import platform
 from kivy.clock import Clock
 from kivy.compat import PY2
-
+from kivy.uix.modalview import ModalView
 from kivy.uix.filechooser import FileChooserController, FileChooserLayout, FileChooser
 from kivy.uix.dropdown import DropDown
 from kivy.uix.button import Button
@@ -425,6 +425,9 @@ class FileExplorer(BoxLayout):
     defaults to '[]'.
     '''
 
+    content = ObjectProperty()
+    _container = ObjectProperty()
+
     file_type_filters = [
         {'viewclass': 'MDMenuItem',
          'text': 'All Files (*.*)'},
@@ -452,7 +455,8 @@ class FileExplorer(BoxLayout):
 
     def __init__(self, **kwargs):
         super(FileExplorer, self).__init__(**kwargs)
-        self.ids.path_ti.text = self.file_layout_controller.path
+        #Clock.schedule_once(self.post_init())
+        #self.ids.path_ti.text = self.content.path
 
         self.dropdown = DropDown()
         for d in self.file_type_filters:
@@ -464,7 +468,13 @@ class FileExplorer(BoxLayout):
         self.file_layout_controller.bind(on_submit=self.update_file)
         Clock.schedule_once(self._post_init)
 
+
+    #def on_content(self, instance, value):
+    #    self._container.clear_widgets()
+    #    self._container.add_widget(self.content)
+
     def _post_init(self, *largs):
+        self.ids.path_ti.text = self.file_layout_controller.path
         self.file_layout_controller.bind(selection=partial(self._attr_callback, 'selection'),
                                          path=partial(self._attr_callback, 'path'),
                                          filters=partial(self._attr_callback, 'filters'),
@@ -514,11 +524,18 @@ if __name__ == '__main__':
 
         def build(self):
             user_path = os.path.join(get_home_directory(), 'Documents')
-            root = FileExplorer(select_string='Select',
-                                    favorites=[(user_path, 'Documents')])
-            root.bind(on_success=self._fbrowser_success,
+            root = BoxLayout()
+            mv = ModalView()
+            fe = FileExplorer(select_string='Select',
+                              favorites=[(user_path, 'Documents')])
+            fe.bind(on_success=self._fbrowser_success,
                           on_canceled=self._fbrowser_canceled,
                           on_submit=self._fbrowser_submit)
+            mv.add_widget(fe)
+            but = Button(text='mv')
+            but.bind(on_release=mv.open)
+            root.add_widget(but)
+
             return root
 
         def _fbrowser_canceled(self, instance):

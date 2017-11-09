@@ -5,16 +5,21 @@ from kivy.uix.button import Button
 
 from kivyic.errs.my_classes import ModalViewContent
 from kivyic.filebrowser import FileExplorer
+from kivymd.dialog import MDDialog
+from kivymd.theming import ThemeManager
 
 main_kv = '''
-BoxLayout:
+GridLayout:
     Button:
+        size_hint: None, None
+        size: 100, 20
         text: 'modal view'
         on_release: app.open_file_dialog()
 '''
 
 
 class TestApp2(App):
+    theme_cls = ThemeManager()
 
     def build(self):
         main_widget = Builder.load_string(main_kv)
@@ -24,9 +29,15 @@ class TestApp2(App):
         return main_widget
 
     def open_file_dialog(self):
-        mv = ModalView(size_hint=(.8,.8))
         mvc = FileExplorer()
-        mv.add_widget(mvc)
+        #mvc = Button(text='test', valign='top', size_hint_y=None)
+        #mvc.bind(texture_size=mvc.setter('size'))
+        mvc.size_hint_y = None
+        mvc.height = '200dp'
+        mv = MDDialog(size_hint=(.8, .8), content=mvc, title='File Explorer')
+        mv.add_action_button("Dismiss",
+                             action=lambda *x: mv.dismiss())
+        #mv.add_widget(mvc)
         mv.open()
 
 

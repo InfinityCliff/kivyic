@@ -190,7 +190,7 @@ class ICDialog(ThemableBehavior, RectangularElevationBehavior, ModalView):
             self._action_area.add_widget(btn)
 
 
-class FileExplorerDialog(ICDialog):
+class FileExplorerDialog(MDDialog):
     title = StringProperty()                # dialog box title
     initial_directory = StringProperty()    # starting directory for file dialog
     filter = ListProperty()                 # file filter list

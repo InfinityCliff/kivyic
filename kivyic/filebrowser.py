@@ -1,8 +1,8 @@
 '''
-FileBrowser
+FileExplorer
 ===========
 
-The :class:`FileBrowser` widget is an advanced file browser. You use it
+The :class:`FileExplorer` widget is an advanced file browser. You use it
 similarly to FileChooser usage.
 
 It provides a shortcut bar with links to special and system directories.
@@ -10,10 +10,7 @@ When touching next to a shortcut in the links bar, it'll expand and show
 all the directories within that directory. It also facilitates specifying
 custom paths to be added to the shortcuts list.
 
-It provides a icon and list view to choose files from. And it also accepts
-filter and filename inputs.
-
-To create a FileBrowser which prints the currently selected file as well as
+To create a FileExplorer which prints the currently selected file as well as
 the current text in the filename field when 'Select' is pressed, with
 a shortcut to the Documents directory added to the favorites bar::
 
@@ -24,12 +21,13 @@ a shortcut to the Documents directory added to the favorites bar::
 
         def build(self):
             user_path = os.path.join(get_home_directory(), 'Documents')
-            browser = FileBrowser(select_string='Select',
-                                  favorites=[(user_path, 'Documents')])
-            browser.bind(on_success=self._fbrowser_success,
-                         on_canceled=self._fbrowser_canceled,
-                         on_submit=self._fbrowser_submit)
-            return browser
+            fe = FileExplorer(select_string='Select',
+                              favorites=[(user_path, 'Documents')])
+            fe.bind(on_success=self._fbrowser_success,
+                    on_canceled=self._fbrowser_canceled,
+                    on_submit=self._fbrowser_submit)
+
+            return fe
 
         def _fbrowser_canceled(self, instance):
             print('cancelled, Close self.')
@@ -61,7 +59,7 @@ __version__ = '0.0-dev'
 
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.treeview import TreeViewLabel, TreeView
-from kivy.uix.filechooser import FileChooserIconView as IconView
+
 try:
     from kivy.garden.filechooserthumbview import FileChooserThumbView as \
         IconView
@@ -73,22 +71,20 @@ from kivy.lang import Builder
 from kivy.utils import platform
 from kivy.clock import Clock
 from kivy.compat import PY2
-from kivy.uix.modalview import ModalView
-from kivy.uix.filechooser import FileChooserController, FileChooserLayout, FileChooser
+from kivy.uix.filechooser import FileChooserLayout
 from kivy.uix.dropdown import DropDown
 from kivy.uix.button import Button
 
 import string
 
+import os
 from os.path import sep, dirname, expanduser, isdir, join, isfile
 from os import walk
 from sys import getfilesystemencoding
 from functools import partial
 
 from kivyic import path
-
-
-from kivymd.menu import MDDropdownMenu
+from kivyic.menu import ICDropdown
 
 if platform == 'win':
     from ctypes import windll, create_unicode_buffer
@@ -164,11 +160,8 @@ class LinkTree(TreeView):
     _computer_node = None
     _libs = ObjectProperty()
 
-    #def __init__(self, **kwargs):
-        #super(LinkTree, self).__init__(**kwargs)
 
     def fill_tree(self, fav_list):
-        #app = App.get_running_app()
         user_path = get_home_directory()
         self._favs = self.add_node(TreeLabel(text='Favorites', is_open=True,
                                              no_selection=True))
@@ -186,16 +179,11 @@ class LinkTree(TreeView):
         self._computer_node.bind(on_touch_down=self._drives_touch)
         self.reload_drives()
 
-    #def change_path(self, instance, newpath, *args):
-    #    print('changing path')
-    #    print(newpath)
-
     def _drives_touch(self, obj, touch):
         if obj.collide_point(*touch.pos):
             self.reload_drives()
 
     def reload_drives(self):
-        #app = App.get_running_app()
         nodes = [(node, node.text + node.path) for node in \
                  self._computer_node.nodes if isinstance(node, TreeLabel)]
         sigs = [s[1] for s in nodes]
@@ -214,11 +202,9 @@ class LinkTree(TreeView):
         for text, path in nodes_new:
             if text + path + sep not in sigs:
                 tl = TreeLabel(text=text, path=path + sep)
-                #(on_change_path=app.root.update_path)
                 self.add_node(tl, self._computer_node)
 
     def reload_favs(self, fav_list):
-        #app = App.get_running_app()
         user_path = get_home_directory()
         favs = self._favs
         remove = []
@@ -231,12 +217,10 @@ class LinkTree(TreeView):
         for place in places:
             if isdir(join(user_path, place)):
                 tl = TreeLabel(text=place, path=join(user_path, place))
-                #tl.bind(on_change_path=app.root.update_path)
                 self.add_node(tl, favs)
         for path, name in fav_list:
             if isdir(path):
                 tl = TreeLabel(text=name, path=path)
-                #tl.bind(on_change_path=app.root.update_path)
                 self.add_node(tl, favs)
 
     def trigger_populate(self, node):
@@ -250,7 +234,7 @@ class LinkTree(TreeView):
             for path in _next[1]:
                 tl = TreeLabel(text=path, path=parent + sep + path)
                 tl.bind(on_change_path=app.root.update_path)
-                self.add_node(tl ,node)
+                self.add_node(tl, node)
 
 
 class FileLayout(FileChooserLayout):
@@ -288,7 +272,9 @@ class FileLayout(FileChooserLayout):
 
 class FileExplorer(BoxLayout):
     file_layout_controller = ObjectProperty()
+    file_layout = ObjectProperty()
     filter_button = ObjectProperty()
+    file_selection_container = ObjectProperty()
     dropdown = ObjectProperty()
 
     __events__ = ('on_canceled', 'on_success', 'on_submit')
@@ -425,9 +411,6 @@ class FileExplorer(BoxLayout):
     defaults to '[]'.
     '''
 
-    content = ObjectProperty()
-    _container = ObjectProperty()
-
     file_type_filters = [
         {'viewclass': 'MDMenuItem',
          'text': 'All Files (*.*)'},
@@ -455,9 +438,6 @@ class FileExplorer(BoxLayout):
 
     def __init__(self, **kwargs):
         super(FileExplorer, self).__init__(**kwargs)
-        #Clock.schedule_once(self.post_init())
-        #self.ids.path_ti.text = self.content.path
-
         self.dropdown = DropDown()
         for d in self.file_type_filters:
             btn = Button(text=d['text'])
@@ -467,11 +447,6 @@ class FileExplorer(BoxLayout):
 
         self.file_layout_controller.bind(on_submit=self.update_file)
         Clock.schedule_once(self._post_init)
-
-
-    #def on_content(self, instance, value):
-    #    self._container.clear_widgets()
-    #    self._container.add_widget(self.content)
 
     def _post_init(self, *largs):
         self.ids.path_ti.text = self.file_layout_controller.path
@@ -500,43 +475,35 @@ class FileExplorer(BoxLayout):
     def update_file(self, instance, paths, *args):
         self.ids.selected_file.text = os.path.normpath(paths[0])
 
-    def update_filter(self, instance, x):
-        print(instance, x)
+    #def update_filter(self, instance, x):
+    #    print(instance, x)
         #self.file_layout_controller.filters = [self.ids.file_layout.is_file, new_filter]
 
     def open_filter_menu(self, mainbutton):
-        dropdown = MDDropdownMenu(items=self.file_type_filters, width_mult=4)
-        #dropdown.bind(on_release=self.update_filter(dropdown.text))
-        #dropdown.bind(on_touch_up=lambda instance, x: self.update_filter(instance, x))
+        print('open_filter_menu')
+        dropdown = ICDropdown(items=self.file_type_filters, width_mult=4)
         dropdown.bind(on_release=lambda instance, x: print(instance, x))
-        dropdown.bind(on_select=lambda instance, x: setattr(mainbutton, 'text', x))
-        dropdown.open(mainbutton)
+        dropdown.bind(on_select=lambda instance, x: setattr(self.filter_button, 'text', x))
+        dropdown.open(self.filter_button)
 
 
 
 
 
 if __name__ == '__main__':
-    import os
     from kivy.app import App
 
     class TestApp(App):
 
         def build(self):
             user_path = os.path.join(get_home_directory(), 'Documents')
-            root = BoxLayout()
-            mv = ModalView()
             fe = FileExplorer(select_string='Select',
                               favorites=[(user_path, 'Documents')])
             fe.bind(on_success=self._fbrowser_success,
-                          on_canceled=self._fbrowser_canceled,
-                          on_submit=self._fbrowser_submit)
-            mv.add_widget(fe)
-            but = Button(text='mv')
-            but.bind(on_release=mv.open)
-            root.add_widget(but)
+                    on_canceled=self._fbrowser_canceled,
+                    on_submit=self._fbrowser_submit)
 
-            return root
+            return fe
 
         def _fbrowser_canceled(self, instance):
             print('cancelled, Close self.')

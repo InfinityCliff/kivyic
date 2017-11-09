@@ -1,15 +1,10 @@
 from kivy.app import App
 from kivy.lang import Builder
-import time
+
 from kivymd.theming import ThemeManager
-from kivyic.filebrowser import FileExplorer, get_home_directory
-from kivy.uix.modalview import ModalView
+from kivymd.dialog import MDDialog
 
-from kivyic.dialog import FileExplorerDialog, ICDialog
-from kivyic import path
-from kivy.garden.filebrowser import LinkTree
-
-#Builder.load_file(path + '/filebrowser.kv')
+from kivyic.filebrowser import FileExplorer
 
 main_kv = '''
 #:import MDNavigationDrawer kivymd.navigationdrawer.MDNavigationDrawer
@@ -17,6 +12,8 @@ main_kv = '''
 #:import NavigationDrawerDivider kivymd.navigationdrawer.NavigationDrawerDivider
 #:import NavigationDrawerToolbar kivymd.navigationdrawer.NavigationDrawerToolbar
 
+#:import ICDropDown kivyic.menu.ICDropdown
+#:import DialogOKDismiss kivyic.dialog.DialogOKDismiss
 #:import OneLineTextInputItem kivyic.textfields.OneLineTextInputItem
 #:import ICFilterPanel kivyic.filteric.ICFilterPanel
 #:import FileExplorer kivyic.filebrowser.FileExplorer
@@ -42,8 +39,8 @@ NavigationLayout:
             on_release: app.root.ids.scr_mngr.current = 'dialogs'    
         NavigationDrawerIconButton:
             icon: 'checkbox-blank-circle'
-            text: "File Explorer"
-            on_release: app.root.ids.scr_mngr.current = 'fileexplorer'                    
+            text: "Menu"
+            on_release: app.root.ids.scr_mngr.current = 'menu'                    
         NavigationDrawerIconButton:
             icon: 'checkbox-blank-circle'
             text: "blank"
@@ -139,15 +136,26 @@ NavigationLayout:
                         height: '48dp'
                         width: '100dp'
                         pos_hint: {'center_x': 0.5}
+                        text: 'OK Dialog'
+                        on_release: DialogOKDismiss().open()
+                    Button:
+                        size_hint: None, None
+                        height: '48dp'
+                        width: '100dp'
+                        pos_hint: {'center_x': 0.5}
                         text: 'File Explorer'
                         on_release: app.open_file_dialog() 
             Screen:
-                name: 'fileexplorer'
+                name: 'menu'
                 GridLayout:
                     rows: 1
                     Button: 
-                        text: 'File Explorer'
-                        on_release: app.open_file_dialog()
+                        size_hint: None, None
+                        height: '48dp'
+                        width: '100dp'
+                        pos_hint: {'center_x': 0.5}
+                        text: 'Drop Down'
+                        on_release: ICDropDown().open(self)
             Screen:
                 name: 'blank'
                 GridLayout:
@@ -166,14 +174,10 @@ class Sampler(App):
 
     def open_file_dialog(self):
         #user_path = get_home_directory()
-        mv = ModalView(size_hint=(.8,.8))
-        #fe = FileExplorer(select_string='Select',
-        #                  favorites=[(user_path, 'Documents')])
         fe = FileExplorer()
-        #fe.bind(on_success=self._fbrowser_success,
-        #        on_canceled=self._fbrowser_canceled,
-        #        on_submit=self._fbrowser_submit)
-        mv.add_widget(fe)
+        mv = MDDialog(size_hint=(.8,.8), content=fe, title='File Explorer')
+        mv.add_action_button("Dismiss",
+                             action=lambda *x: mv.dismiss())
         mv.open()
 
     def build_sample_filter(self, widget):

@@ -7,7 +7,7 @@ from kivy.metrics import dp
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
-from kivy.properties import ObjectProperty, NumericProperty, StringProperty, ListProperty
+from kivy.properties import ObjectProperty, NumericProperty, StringProperty, ListProperty, OptionProperty
 from kivy.uix.filechooser import FileChooserListLayout
 from kivy.animation import Animation
 
@@ -76,6 +76,7 @@ class ICDialog(ThemableBehavior, RectangularElevationBehavior, ModalView):
     defaults to None.
     '''
 
+    content_fit = OptionProperty('items', options=['window', 'items'])
     md_bg_color = ListProperty([0, 0, 0, .2])
 
     _container = ObjectProperty()
@@ -83,10 +84,12 @@ class ICDialog(ThemableBehavior, RectangularElevationBehavior, ModalView):
     _action_area = ObjectProperty()
 
     def __init__(self, **kwargs):
-        super(ICDialog, self).__init__(**kwargs)
+        print(kwargs)
+        super().__init__(**kwargs)
         self.bind(_action_buttons=self._update_action_buttons,
                   auto_dismiss=lambda *x: setattr(self.shadow, 'on_release',
                                                   self.shadow.dismiss if self.auto_dismiss else None))
+
 
     def add_action_button(self, text, action=None):
         """Add an :class:`FlatButton` to the right of the action area.
@@ -175,6 +178,11 @@ class ICDialog(ThemableBehavior, RectangularElevationBehavior, ModalView):
         if value is None or self.content is None:
             return
         self._container.clear_widgets()
+        #self._container.size_hint = {'window': (1, 1), 'items': (1, None)}[self.content_fit]
+        #self._container.height = {'window': 0, 'items': self._container.minimum_height}[self.content_fit]
+        print(self._container.size)
+
+
         self._container.add_widget(self.content)
 
     def on_touch_down(self, touch):
@@ -190,25 +198,42 @@ class ICDialog(ThemableBehavior, RectangularElevationBehavior, ModalView):
             self._action_area.add_widget(btn)
 
 
-class FileExplorerDialog(MDDialog):
+class FileExplorerDialog(ICDialog):
     title = StringProperty()                # dialog box title
     initial_directory = StringProperty()    # starting directory for file dialog
     filter = ListProperty()                 # file filter list
     filter_index = NumericProperty(2)       # current active file filter, defaults to all *.*
-    action_buttons = ListProperty()         # Buttons in the dialog
+    #action_buttons = ListProperty()         # Buttons in the dialog
     file_name = StringProperty()            # Name of selected file
 
     def __init__(self, **kwargs):
         super(FileExplorerDialog, self).__init__(**kwargs)
         user_path = os.path.join(get_home_directory(), 'Documents')
 
-        fe = FileExplorer(select_string='Select',
-                           favorites=[(user_path, 'Documents')])
 
-        #fe.bind(on_success=self._fbrowser_success,
-        #        on_canceled=self._fbrowser_canceled,
-        #        on_submit=self._fbrowser_submit)
-        self.add_widget(fe)
+        fileexplorer = FileExplorer(select_string='Select',
+                                    favorites=[(user_path, 'Documents')])
+        fileexplorer.bind(on_success=self._fbrowser_success,
+                          on_canceled=self._fbrowser_canceled,
+                          on_submit=self._fbrowser_submit)
+        fileexplorer.file_selection_container.clear_widgets()
+        self.content = fileexplorer
+
+        self.add_action_button("Dismiss",
+                               action=lambda *x: fileexplorer.dispatch('on_canceled'))
+        self.add_action_button("OK",
+                               action=lambda *x: fileexplorer.dispatch('on_success'))
+
+    def _fbrowser_canceled(self, instance):
+        self.dismiss()
+
+    def _fbrowser_success(self, instance):
+        self.file_name = instance.selection[0]
+        self.dismiss()
+
+    def _fbrowser_submit(self, instance):
+        self.file_name = instance.selection[0]
+        self.dismiss()
 
     def add_button(self, buttons):
         for text, action in buttons.items():
@@ -243,7 +268,7 @@ class DialogOKDismiss(MDDialog):
         self.dismiss()
 
 
-class TestgApp(App):
+class TestApp(App):
     title = 'Dialog Test App'
     theme_cls = ThemeManager()
 
@@ -253,12 +278,8 @@ class TestgApp(App):
         return self.root
 
     def open_file_dialog(self):
-        #time.sleep(5)
         d = FileExplorerDialog()
-        #d.content = FileExplorer()
-        #print(d._container.size)
-        d.add_button({'cancel': d.dismiss})
         d.open()
 
 if __name__ == '__main__':
-    TestgApp().run()
+    TestApp().run()

@@ -15,15 +15,17 @@
 <FileExplorer>:
     id: fileexplorer
     file_layout_controller: file_layout_controller
+    file_layout: file_layout
     filter_button: filter_button
+    file_selection_container: file_selection_container
     orientation: 'vertical'
+    #size_hint: 1, 1
     canvas.before:
         Color:
             rgba: .9,.9,.9,1
         Rectangle:
             size: self.size
             pos: self.pos
-
     BoxLayout: # Row 1
         orientation: 'horizontal'
         spacing: '5dp'
@@ -60,7 +62,7 @@
         FileChooser:
             id: file_layout_controller
             filter_dirs: True
-            filters: [file_layout.is_file]
+            filters: root.filters # [file_layout.is_file]
             rootpath: ''
             FileLayout
                 id: file_layout
@@ -94,8 +96,38 @@
             text: 'All files (*.*)'
             size_hint_y: None
             height: self.parent.height
-            on_release: root.dropdown.open(self)
-
+            on_release: root.open_filter_menu(self) # ICDropdownMenu(items=root.file_type_filters, width_mult=4).open(self) #
+    GridLayout: # Row 4
+        id: file_selection_container
+        size_hint: (1, None)
+        height: file_text.line_height * 4 if len(self.children) > 0 else 0
+        cols: 2
+        rows: 2
+        spacing: [5]
+        TextInput:
+            id: file_text
+            text: (root.selection and (root._shorten_filenames(root.selection) if root.multiselect else root.selection[0])) or ''
+            hint_text: 'Filename'
+            multiline: False
+        Button:
+            id: select_button
+            size_hint_x: None
+            width: metrics.dp(100)
+            text: root.select_string
+            on_release: root.dispatch('on_success')
+        TextInput:
+            id: filt_text
+            hint_text: '*.*'
+            on_text_validate:
+                root.filters = self.text.split(',') if self.text else []
+            multiline: False
+            text: ','.join([filt for filt in root.filters if isinstance(filt, str)])
+        Button:
+            id: cancel_button
+            size_hint_x: None
+            width: metrics.dp(100)
+            text: root.cancel_string
+            on_release: root.dispatch('on_canceled')
 
 <FileLayout>:
 # treeview to display lisr of files/dirs, uses FileView template

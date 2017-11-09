@@ -1,0 +1,22 @@
+#:import MDMenu kivymd.menu.MDMenu
+
+<ICMenuItem>:
+    padding: 0
+    spacing: 0
+    Label:
+        text: root._title + root._filter
+<ICDropdownMenu>
+    FloatLayout:
+        id: fl
+        MDMenu:
+            id: md_menu
+            data: root.items
+            width_mult: root.width_mult
+            size_hint: None, None
+            size: 0,0
+            canvas.before:
+                #Color:
+                #    rgba: root.theme_cls.bg_light
+                Rectangle:
+                    size: self.size
+                    pos: self.pos

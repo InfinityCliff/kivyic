@@ -5,11 +5,15 @@
     spacing: 0
     Label:
         text: root._title + root._filter
-<ICDropdownMenu>
+
+<ICMenu>:
+    orientation: 'vertical'
+
+<ICDropdown>
     FloatLayout:
         id: fl
-        MDMenu:
-            id: md_menu
+        ICMenu:
+            id: ic_menu
             data: root.items
             width_mult: root.width_mult
             size_hint: None, None

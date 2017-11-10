@@ -2,10 +2,11 @@ from kivy.lang import Builder
 from kivy.animation import Animation
 from kivy.core.window import Window
 from kivy.metrics import dp
-from kivy.properties import ListProperty, NumericProperty, StringProperty
+from kivy.properties import ListProperty, NumericProperty, StringProperty, ObjectProperty, OptionProperty
 from kivy.uix.dropdown import DropDown
 from kivy.uix.behaviors.button import ButtonBehavior
 from kivy.uix.boxlayout import BoxLayout
+from kivy.clock import Clock
 
 import kivymd.material_resources as m_res
 from kivymd.theming import ThemableBehavior
@@ -18,15 +19,30 @@ Builder.load_file(path + '/menu.kv')
 class ICMenuItem(ButtonBehavior, BoxLayout):
     _title = StringProperty()
     _filter = StringProperty()
-    text = StringProperty
+    text = ObjectProperty()
 
-    def __init__(self, **kwargs):
-        super(ICMenuItem, self).__init__(**kwargs)
-        # TODO -   WORKING HERE - USE DICT TO PICK VALUE OF TITLE AND FILTER BASED ON TYPE OF TEXT, LIST, TUPLE, STRING WITH ,
-        if type(self.text)
+    def on_text(self, instance, value):
+        if type(self.text) in[list, tuple]:
+            self._title, self._filter = self.text[0], self.text[1]
+        if type(self.text) == dict:
+            self._title, self._filter = self.text['title'], self.text['filter']
+        if type(self.text) == str:
+            self._title, self._filter = self.text.split()
+
+
+class ICMenu(BoxLayout):
+    data = ListProperty()
+    _container = ObjectProperty()
+
+    def on_data(self, instance, value):
+        for d in self.data:
+            self.add_data(d)
+
+    def add_data(self, data):
+        self.add_widget(ICMenuItem(text=data))
+
 
 class ICDropdown(ThemableBehavior, DropDown):
-    #theme_cls = ThemeManager
     items = ListProperty()
     '''See :attr:`~kivy.uix.recycleview.RecycleView.data`
     '''
@@ -38,6 +54,33 @@ class ICDropdown(ThemableBehavior, DropDown):
     If the resulting number were to be too big for the application Window,
     the multiplier will be adjusted for the biggest possible one.
     '''
+
+    max_height = NumericProperty()
+    '''The menu will grow no bigger than this number.
+
+    Set to 0 for no limit. Defaults to 0.
+    '''
+
+    border_margin = NumericProperty(dp(4))
+    '''Margin between Window border and menu
+    '''
+
+    ver_growth = OptionProperty(None, allownone=True,
+                                options=['up', 'down'])
+    '''Where the menu will grow vertically to when opening
+
+    Set to None to let the widget pick for you. Defaults to None.
+    '''
+
+    hor_growth = OptionProperty(None, allownone=True,
+                                options=['left', 'right'])
+    '''Where the menu will grow horizontally to when opening
+
+    Set to None to let the widget pick for you. Defaults to None.
+    '''
+    def open(self, caller):
+        Clock.schedule_once(lambda x: self.display_menu(caller), -1)
+
     def on_select(self, value):
         print(value)
         super().on_select(value)
@@ -115,6 +158,7 @@ class ICDropdown(ThemableBehavior, DropDown):
         anim = Animation(x=tar_x, y=tar_y,
                          width=target_width, height=target_height,
                          duration=.3, transition='out_quint')
-        menu = self.ids['md_menu']
+        menu = self.ids['ic_menu']
+        # TODO WORKING HERE TO GET MENU TO SHOW, LOOKS LIKE MENU DATA IS PASSING CORRECTLY JUST NOT OPENING
         menu.pos = c
         anim.start(menu)

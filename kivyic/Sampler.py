@@ -155,7 +155,7 @@ NavigationLayout:
                         width: '100dp'
                         pos_hint: {'center_x': 0.5}
                         text: 'Drop Down'
-                        on_release: ICDropDown().open(self)
+                        on_release: ICDropDown(items=[('All', '*.*'), ('Text', '*.txt')]).open(self)
             Screen:
                 name: 'blank'
                 GridLayout:

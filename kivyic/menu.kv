@@ -1,13 +1,42 @@
 #:import MDMenu kivymd.menu.MDMenu
 
+<ICMenuLabel@MDLabel>:
+    size_hint_y: None
+    height: dp(20)
+    theme_text_color: 'Primary'
+    canvas.after:
+        Color:
+            rgba: 0,0,1,.3
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
 <ICMenuItem>:
-    padding: 0
-    spacing: 0
-    Label:
-        text: root._title + root._filter
+    size_hint_y: None
+    height: self.minimum_height
+    on_release:
+        #root.parent.parent.parent.parent.dismiss()
+        self.dispatch('on_select', self.text)
+    ICMenuLabel:
+        text: root.text
+
+
+<-ICMenuFilterItem>:
+    size_hint_y: None
+    height: self.minimum_height
+    on_release:
+        #root.parent.parent.parent.parent.dismiss()
+        self.dispatch('on_select', self._filter)
+    ICMenuLabel:
+        text: '{} ({})'.format(root._title, root._filter)
 
 <ICMenu>:
+    size_hint: None, None
+    width: root.width_mult * STD_INC
+    height: self. minimum_height
+    key_viewclass: 'viewclass'
     orientation: 'vertical'
+
 
 <ICDropdown>
     FloatLayout:
@@ -19,8 +48,8 @@
             size_hint: None, None
             size: 0,0
             canvas.before:
-                #Color:
-                #    rgba: root.theme_cls.bg_light
+                Color:
+                    rgba: root.theme_cls.bg_light
                 Rectangle:
                     size: self.size
                     pos: self.pos

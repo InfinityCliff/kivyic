@@ -6,6 +6,7 @@ from kivymd.dialog import MDDialog
 
 from kivyic.filebrowser import FileExplorer
 
+
 main_kv = '''
 #:import MDNavigationDrawer kivymd.navigationdrawer.MDNavigationDrawer
 #:import NavigationLayout kivymd.navigationdrawer.NavigationLayout
@@ -18,6 +19,7 @@ main_kv = '''
 #:import ICFilterPanel kivyic.filteric.ICFilterPanel
 #:import FileExplorer kivyic.filebrowser.FileExplorer
 #:import get_home_directory kivyic.filebrowser.get_home_directory
+#:import color_canvas kivyic.debug.color_canvas
 
 NavigationLayout:
     id: nav_layout
@@ -147,15 +149,41 @@ NavigationLayout:
                         on_release: app.open_file_dialog() 
             Screen:
                 name: 'menu'
-                GridLayout:
-                    rows: 1
-                    Button: 
-                        size_hint: None, None
-                        height: '48dp'
-                        width: '100dp'
-                        pos_hint: {'center_x': 0.5}
-                        text: 'Drop Down'
-                        on_release: ICDropDown(items=[('All', '*.*'), ('Text', '*.txt')]).open(self)
+                MDRaisedButton:
+                    size_hint: None, None
+                    size: 3 * dp(48), dp(48)
+                    text: 'Drop Down'
+                    opposite_colors: True
+                    pos_hint: {'center_x': 0.1, 'center_y': 0.9}
+                    on_release: ICDropDown(items=app.menu_items, width_mult=5).open(self)
+                MDRaisedButton:
+                    size_hint: None, None
+                    size: 3 * dp(48), dp(48)
+                    text: 'Drop Down'
+                    opposite_colors: True
+                    pos_hint: {'center_x': 0.1, 'center_y': 0.1}
+                    on_release: ICDropDown(items=app.menu_items, width_mult=5).open(self)
+                MDRaisedButton:
+                    size_hint: None, None
+                    size: 3 * dp(48), dp(48)
+                    text: 'Drop Down'
+                    opposite_colors: True
+                    pos_hint: {'center_x': 0.9, 'center_y': 0.1}
+                    on_release: ICDropDown(items=app.menu_items, width_mult=5).open(self)
+                MDRaisedButton:
+                    size_hint: None, None
+                    size: 3 * dp(48), dp(48)
+                    text: 'Drop Down'
+                    opposite_colors: True
+                    pos_hint: {'center_x': 0.9, 'center_y': 0.9}
+                    on_release: ICDropDown(items=app.menu_items, width_mult=5).open(self)
+                MDRaisedButton:
+                    size_hint: None, None
+                    size: 3 * dp(48), dp(48)
+                    text: 'Drop Down'
+                    opposite_colors: True
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    on_release: ICDropDown(items=app.menu_items, width_mult=5).open(self)
             Screen:
                 name: 'blank'
                 GridLayout:
@@ -167,6 +195,29 @@ class Sampler(App):
     title = 'KivyIC Sampler'
     theme_cls = ThemeManager()
 
+    menu_items1 = [('All Files', '*.*'), ('Text Documents', '*.txt'),
+                  ('Image Files', '*.bmp, *.jpg, *.jpeg, *.gif, *.png, *.ico')]
+
+    menu_items2 = [
+        {'viewclass': 'ICFilterMenuItem',
+         'text': ('All Files', '*.*')}]
+
+    menu_items = [
+        {'viewclass': 'ICFilterMenuItem',
+         'text': ('All Files', '*.*')},
+        {'viewclass': 'ICFilterMenuItem',
+         'text': ('Text Documents', '*.txt')},
+        {'viewclass': 'ICFilterMenuItem',
+         'text': ('Image Files', '*.bmp, *.jpg, *.jpeg, *.gif, *.png, *.ico')},
+        {'viewclass': 'ICFilterMenuItem',
+         'text': 'Example item'},
+        {'viewclass': 'ICFilterMenuItem',
+         'text': 'Example item'},
+        {'viewclass': 'ICFilterMenuItem',
+         'text': 'Example item'},
+        {'viewclass': 'ICMenuItem',
+         'text': 'MENU ITEM'},
+    ]
     def build(self):
         main_widget = Builder.load_string(main_kv)
         self.build_sample_filter(main_widget)

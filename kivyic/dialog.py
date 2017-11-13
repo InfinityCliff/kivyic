@@ -104,7 +104,7 @@ class ICDialog(ThemableBehavior, RectangularElevationBehavior, ModalView):
                               height=dp(36))
         if action:
             button.bind(on_release=action)
-        # TODO - fix color
+        # FIXME - fix color
         button.text_color = self.theme_cls.primary_color
         button.md_bg_color = self.theme_cls.bg_light
         self._action_buttons.append(button)

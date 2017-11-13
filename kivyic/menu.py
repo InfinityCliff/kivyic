@@ -1,6 +1,10 @@
 from kivy.lang import Builder
 from kivy.animation import Animation
 from kivy.core.window import Window
+from kivy.lang import Builder
+from kivy.uix.recycleview import RecycleView
+from kivy.uix.recycleview.views import RecycleDataViewBehavior
+from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.metrics import dp
 from kivy.properties import ListProperty, NumericProperty, StringProperty, ObjectProperty, OptionProperty
 from kivy.uix.dropdown import DropDown
@@ -10,6 +14,7 @@ from kivy.clock import Clock
 
 import kivymd.material_resources as m_res
 from kivymd.theming import ThemableBehavior
+from kivymd.label import MDLabel
 
 from kivyic import path
 
@@ -17,6 +22,18 @@ Builder.load_file(path + '/menu.kv')
 
 
 class ICMenuItem(ButtonBehavior, BoxLayout):
+    text = StringProperty()
+
+    def __init__(self, **kwargs):
+        super(ICMenuItem, self).__init__(**kwargs)
+        self.register_event_type('on_select')
+        #self.bind(on_release=self.on_select(self.text))
+
+    def on_select(self, value):
+        pass
+
+
+class ICMenuFilterItem(ICMenuItem):
     _title = StringProperty()
     _filter = StringProperty()
     text = ObjectProperty()
@@ -30,19 +47,27 @@ class ICMenuItem(ButtonBehavior, BoxLayout):
             self._title, self._filter = self.text.split()
 
 
+menu_viewclass_def = {'ICMenuItem': ICMenuItem,
+                      'ICFilterMenuItem': ICMenuFilterItem}
+
+
+# TOFIX - menu height is too large, loot at display_menu function in dropdown
 class ICMenu(BoxLayout):
     data = ListProperty()
-    _container = ObjectProperty()
+    width_mult = NumericProperty(1)
 
     def on_data(self, instance, value):
-        for d in self.data:
-            self.add_data(d)
+        for dict_ in self.data:
+            cls = menu_viewclass_def[dict_['viewclass']]
+            mi = cls(text=dict_['text'])
+            mi.bind(on_select=self.on_select)
+            self.add_widget(mi)
 
-    def add_data(self, data):
-        self.add_widget(ICMenuItem(text=data))
+    def on_select(self, obj, value):
+        pass
 
 
-class ICDropdown(ThemableBehavior, DropDown):
+class ICDropdown(ThemableBehavior, BoxLayout):
     items = ListProperty()
     '''See :attr:`~kivy.uix.recycleview.RecycleView.data`
     '''
@@ -78,12 +103,16 @@ class ICDropdown(ThemableBehavior, DropDown):
 
     Set to None to let the widget pick for you. Defaults to None.
     '''
-    def open(self, caller):
-        Clock.schedule_once(lambda x: self.display_menu(caller), -1)
 
-    def on_select(self, value):
-        print(value)
-        super().on_select(value)
+    def open(self, caller):
+        Window.add_widget(self)
+        Clock.schedule_once(lambda x: self.display_menu(caller), -1)
+        self.ids.ic_menu.bind(on_select=self.on_select)
+
+    def on_select(self, obj, value):
+        self.ids.ic_menu.text = value
+        print(obj)
+        # WORKING HERE - not sending up the  line, add prings to on_selcts down to see where it stops...
 
     def display_menu(self, caller):
         # We need to pick a starting point, see how big we need to be,
@@ -98,7 +127,7 @@ class ICDropdown(ThemableBehavior, DropDown):
         if target_width > Window.width:
             # ...reduce our multiplier to max allowed.
             target_width = int(
-                    Window.width / m_res.STANDARD_INCREMENT) * m_res.STANDARD_INCREMENT
+                Window.width / m_res.STANDARD_INCREMENT) * m_res.STANDARD_INCREMENT
 
         target_height = sum([dp(48) for i in self.items])
         # If we're over max_height...
@@ -159,6 +188,26 @@ class ICDropdown(ThemableBehavior, DropDown):
                          width=target_width, height=target_height,
                          duration=.3, transition='out_quint')
         menu = self.ids['ic_menu']
-        # TODO WORKING HERE TO GET MENU TO SHOW, LOOKS LIKE MENU DATA IS PASSING CORRECTLY JUST NOT OPENING
+        # WORKING HERE TO GET MENU TO SHOW, LOOKS LIKE MENU DATA IS PASSING CORRECTLY JUST NOT OPENING
         menu.pos = c
         anim.start(menu)
+
+
+    def on_touch_down(self, touch):
+        if not self.ids['ic_menu'].collide_point(*touch.pos):
+            self.dismiss()
+            return True
+        super(ICDropdown, self).on_touch_down(touch)
+        return True
+
+    def on_touch_move(self, touch):
+        super(ICDropdown, self).on_touch_move(touch)
+        return True
+
+    def on_touch_up(self, touch):
+        super(ICDropdown, self).on_touch_up(touch)
+        self.dismiss()
+        return True
+
+    def dismiss(self):
+        Window.remove_widget(self)

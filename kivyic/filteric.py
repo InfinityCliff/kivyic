@@ -88,16 +88,12 @@ class ICFilterPanel(BoxLayout):
         pass
 
     def _remove_filter_criteria(self, instance, filter_group, filter_tag):
-        #print('_remove_filter_criteria: ', filter_group, filter_tag)
-        #print(self.filter_criteria_dict)
         self.filter_criteria_dict[filter_group].remove(filter_tag)
         if len(self.filter_criteria_dict[filter_group]) == 0:
             del self.filter_criteria_dict[filter_group]
-        #print(self.filter_criteria_dict)
         self.update_panel_display()
 
     def update_panel_display(self, *largs):
-        print(self.filter_criteria_dict.items())
         self.container.clear_widgets()
         if len(self.filter_criteria_dict.items()):
             for group, filter_vals in self.filter_criteria_dict.items():

@@ -27,7 +27,7 @@ import kivymd.material_resources as m_res
 Builder.load_file(path + '/textfields.kv')
 
 
-# TODO - on selection move cursor to end of line and no text selected
+# FIXME - on selection move cursor to end of line and no text selected
 class ICTextFieldPlain(ThemableBehavior, TextInput, FocusBehavior):
     helper_text = StringProperty("This field is required")
     helper_text_mode = OptionProperty('none', options=['none', 'on_error', 'persistent', 'on_focus'])

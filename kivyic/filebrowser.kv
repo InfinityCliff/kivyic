@@ -74,7 +74,6 @@
                 dirselect: root.dirselect
                 rootpath: root.rootpath
                 on_submit: root.dispatch('on_submit')
-                #on_submit: root.update_file(os.path.normpath(self.selected))
     BoxLayout: # Row 3
         orientation: 'horizontal'
         size_hint_y: None
@@ -91,12 +90,13 @@
             valign: 'center'
             text: 'selected file...'
             text_size: self.size
-        MDFlatButton:
+        ICDropdownButton:
             id: filter_button
             text: 'All files (*.*)'
+            file_type_filters: root.file_type_filters
             size_hint_y: None
             height: self.parent.height
-            on_release: root.open_filter_menu(self) # ICDropdownMenu(items=root.file_type_filters, width_mult=4).open(self) #
+            on_selected_value: root.update_filter(self.selected_value)
     GridLayout: # Row 4
         id: file_selection_container
         size_hint: (1, None)

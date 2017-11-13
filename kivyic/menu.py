@@ -1,25 +1,27 @@
 from kivy.lang import Builder
 from kivy.animation import Animation
 from kivy.core.window import Window
-from kivy.lang import Builder
-from kivy.uix.recycleview import RecycleView
-from kivy.uix.recycleview.views import RecycleDataViewBehavior
-from kivy.uix.recycleboxlayout import RecycleBoxLayout
+
+
 from kivy.metrics import dp
-from kivy.properties import ListProperty, NumericProperty, StringProperty, ObjectProperty, OptionProperty
-from kivy.uix.dropdown import DropDown
+from kivy.properties import ListProperty, NumericProperty, StringProperty, ObjectProperty, OptionProperty, \
+                            ReferenceListProperty
+
 from kivy.uix.behaviors.button import ButtonBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivy.clock import Clock
 
+from kivymd.button import MDFlatButton
 import kivymd.material_resources as m_res
 from kivymd.theming import ThemableBehavior
-from kivymd.label import MDLabel
+
 
 from kivyic import path
+import kivyic.material_resources as icm_res
 
 Builder.load_file(path + '/menu.kv')
 
+MENU_ROW_HEIGHT = dp(20)
 
 class ICMenuItem(ButtonBehavior, BoxLayout):
     text = StringProperty()
@@ -27,7 +29,6 @@ class ICMenuItem(ButtonBehavior, BoxLayout):
     def __init__(self, **kwargs):
         super(ICMenuItem, self).__init__(**kwargs)
         self.register_event_type('on_select')
-        #self.bind(on_release=self.on_select(self.text))
 
     def on_select(self, value):
         pass
@@ -55,16 +56,17 @@ menu_viewclass_def = {'ICMenuItem': ICMenuItem,
 class ICMenu(BoxLayout):
     data = ListProperty()
     width_mult = NumericProperty(1)
+    selected_value = ListProperty()
 
     def on_data(self, instance, value):
         for dict_ in self.data:
             cls = menu_viewclass_def[dict_['viewclass']]
-            mi = cls(text=dict_['text'])
-            mi.bind(on_select=self.on_select)
-            self.add_widget(mi)
+            menu_item = cls(text=dict_['text'])
+            menu_item.bind(on_select=self.item_selected)
+            self.add_widget(menu_item)
 
-    def on_select(self, obj, value):
-        pass
+    def item_selected(self, obj, value):
+        self.selected_value = value
 
 
 class ICDropdown(ThemableBehavior, BoxLayout):
@@ -104,15 +106,17 @@ class ICDropdown(ThemableBehavior, BoxLayout):
     Set to None to let the widget pick for you. Defaults to None.
     '''
 
+    button = ObjectProperty()
+
+    selected_value = ListProperty()
+
     def open(self, caller):
         Window.add_widget(self)
         Clock.schedule_once(lambda x: self.display_menu(caller), -1)
-        self.ids.ic_menu.bind(on_select=self.on_select)
+        self.button = caller
 
-    def on_select(self, obj, value):
-        self.ids.ic_menu.text = value
-        print(obj)
-        # WORKING HERE - not sending up the  line, add prings to on_selcts down to see where it stops...
+    def select_callback(self, value):
+        self.selected_value = value
 
     def display_menu(self, caller):
         # We need to pick a starting point, see how big we need to be,
@@ -129,7 +133,7 @@ class ICDropdown(ThemableBehavior, BoxLayout):
             target_width = int(
                 Window.width / m_res.STANDARD_INCREMENT) * m_res.STANDARD_INCREMENT
 
-        target_height = sum([dp(48) for i in self.items])
+        target_height = sum([icm_res.MENU_ROW_HEIGHT for i in self.items])
         # If we're over max_height...
         if 0 < self.max_height < target_height:
             target_height = self.max_height
@@ -176,22 +180,20 @@ class ICDropdown(ThemableBehavior, BoxLayout):
                     target_width = c[0] - self.border_margin
 
         if ver_growth == 'down':
-            tar_y = c[1] - target_height
+            tar_y = c[1] - target_height - caller.height
         else:  # should always be 'up'
             tar_y = c[1]
 
         if hor_growth == 'right':
-            tar_x = c[0]
+            tar_x = c[0] - caller.width
         else:  # should always be 'left'
             tar_x = c[0] - target_width
         anim = Animation(x=tar_x, y=tar_y,
                          width=target_width, height=target_height,
                          duration=.3, transition='out_quint')
         menu = self.ids['ic_menu']
-        # WORKING HERE TO GET MENU TO SHOW, LOOKS LIKE MENU DATA IS PASSING CORRECTLY JUST NOT OPENING
         menu.pos = c
         anim.start(menu)
-
 
     def on_touch_down(self, touch):
         if not self.ids['ic_menu'].collide_point(*touch.pos):
@@ -211,3 +213,18 @@ class ICDropdown(ThemableBehavior, BoxLayout):
 
     def dismiss(self):
         Window.remove_widget(self)
+
+
+class ICDropdownButton(MDFlatButton):
+    selected_value = ListProperty()
+    dropdown = ObjectProperty()
+
+    def open_dropdown_menu(self):
+        self.dropdown = ICDropdown(items=self.file_type_filters, width_mult=4)
+
+        self.dropdown.bind(selected_value=self.update_return_value)
+        self.dropdown.open(self)
+
+    def update_return_value(self, obj, values):
+        self.text = '{} ({})'.format(values[0], values[1])
+        self.selected_value = values

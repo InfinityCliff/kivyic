@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 FileExplorer
 ===========
@@ -412,20 +413,20 @@ class FileExplorer(BoxLayout):
     '''
 
     file_type_filters = [
-        {'viewclass': 'MDMenuItem',
-         'text': 'All Files (*.*)'},
-        {'viewclass': 'MDMenuItem',
-         'text': 'PDF Files (*.pdf)'},
-        {'viewclass': 'MDMenuItem',
-         'text': 'Text Files (*.txt)'},
-        {'viewclass': 'MDMenuItem',
-         'text': 'Example item'},
-        {'viewclass': 'MDMenuItem',
-         'text': 'Example item'},
-        {'viewclass': 'MDMenuItem',
-         'text': 'Example item'},
-        {'viewclass': 'MDMenuItem',
-         'text': 'Example item'}]
+        {'viewclass': 'ICFilterMenuItem',
+         'text': ('All Files', '*.*')},
+        {'viewclass': 'ICFilterMenuItem',
+         'text': ('PDF Files', '*.pdf')},
+        {'viewclass': 'ICFilterMenuItem',
+         'text': ('Text Files', '*.txt')},
+        {'viewclass': 'ICFilterMenuItem',
+         'text': ('Example', 'item',)},
+        {'viewclass': 'ICFilterMenuItem',
+         'text': ('Example', 'item')},
+        {'viewclass': 'ICFilterMenuItem',
+         'text': ('Example', 'item')},
+        {'viewclass': 'ICFilterMenuItem',
+         'text': ('Example', 'item')}]
 
     def on_success(self):
         pass
@@ -438,13 +439,6 @@ class FileExplorer(BoxLayout):
 
     def __init__(self, **kwargs):
         super(FileExplorer, self).__init__(**kwargs)
-        self.dropdown = DropDown()
-        for d in self.file_type_filters:
-            btn = Button(text=d['text'])
-            btn.bind(on_release=lambda x: self.dropdown.select(x.text))
-            self.dropdown.add_widget(btn)
-        self.dropdown.bind(on_select=lambda instance, x: setattr(self.filter_button, 'text', x))
-
         self.file_layout_controller.bind(on_submit=self.update_file)
         Clock.schedule_once(self._post_init)
 
@@ -468,26 +462,14 @@ class FileExplorer(BoxLayout):
 
     def update_path(self, instance, new_path):
         new_path = os.path.abspath(new_path)
-        #self.dir_layout_controller.path = new_path
         self.file_layout_controller.path = new_path
         self.ids.path_ti.text = new_path
 
     def update_file(self, instance, paths, *args):
         self.ids.selected_file.text = os.path.normpath(paths[0])
 
-    #def update_filter(self, instance, x):
-    #    print(instance, x)
-        #self.file_layout_controller.filters = [self.ids.file_layout.is_file, new_filter]
-
-    def open_filter_menu(self, mainbutton):
-        print('open_filter_menu')
-        dropdown = ICDropdown(items=self.file_type_filters, width_mult=4)
-        dropdown.bind(on_release=lambda instance, x: print(instance, x))
-        dropdown.bind(on_select=lambda instance, x: setattr(self.filter_button, 'text', x))
-        dropdown.open(self.filter_button)
-
-
-
+    def update_filter(self, value):
+        self.filters = [value[1]]
 
 
 if __name__ == '__main__':

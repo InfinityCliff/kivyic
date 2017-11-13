@@ -1,22 +1,16 @@
 #:import MDMenu kivymd.menu.MDMenu
+#:import icm_res kivyic.material_resources
+
 
 <ICMenuLabel@MDLabel>:
     size_hint_y: None
-    height: dp(20)
+    height: icm_res.MENU_ROW_HEIGHT # (20)
     theme_text_color: 'Primary'
-    canvas.after:
-        Color:
-            rgba: 0,0,1,.3
-        Rectangle:
-            pos: self.pos
-            size: self.size
 
 <ICMenuItem>:
     size_hint_y: None
     height: self.minimum_height
-    on_release:
-        #root.parent.parent.parent.parent.dismiss()
-        self.dispatch('on_select', self.text)
+    on_release: self.dispatch('on_select', [self.text])
     ICMenuLabel:
         text: root.text
 
@@ -24,9 +18,7 @@
 <-ICMenuFilterItem>:
     size_hint_y: None
     height: self.minimum_height
-    on_release:
-        #root.parent.parent.parent.parent.dismiss()
-        self.dispatch('on_select', self._filter)
+    on_release: self.dispatch('on_select', [self._title, self._filter])
     ICMenuLabel:
         text: '{} ({})'.format(root._title, root._filter)
 
@@ -38,7 +30,7 @@
     orientation: 'vertical'
 
 
-<ICDropdown>
+<ICDropdown>:
     FloatLayout:
         id: fl
         ICMenu:
@@ -47,9 +39,13 @@
             width_mult: root.width_mult
             size_hint: None, None
             size: 0,0
+            on_selected_value: root.select_callback(self.selected_value)
             canvas.before:
                 Color:
                     rgba: root.theme_cls.bg_light
                 Rectangle:
                     size: self.size
                     pos: self.pos
+
+<ICDropdownButton>:
+    on_release: root.open_dropdown_menu()

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from kivy.lang import Builder
 
 from kivyic import path

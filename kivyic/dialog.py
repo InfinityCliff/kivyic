@@ -1,67 +1,59 @@
+# -*- coding: utf-8 -*-
+"""
+Dialog controls
+"""
+
 import os
 
 from kivy.app import App
 from kivy.lang import Builder
 from kivy import Logger
 from kivy.metrics import dp
-from kivy.clock import Clock
+from kivy.properties import ObjectProperty, NumericProperty, StringProperty, ListProperty, OptionProperty, \
+                            BooleanProperty
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.gridlayout import GridLayout
-from kivy.properties import ObjectProperty, NumericProperty, StringProperty, ListProperty, OptionProperty
-from kivy.uix.filechooser import FileChooserListLayout
 from kivy.animation import Animation
-
 from kivy.uix.modalview import ModalView
 from kivy.uix.popup import PopupException
-from kivy.graphics import Rectangle, Color
-from kivy.uix.dropdown import DropDown
-from kivy.uix.button import Button
-
-from kivyic import path
-from kivyic.filebrowser import FileExplorer, get_home_directory
 
 from kivymd.dialog import MDDialog
 from kivymd.textfields import MDTextField
 from kivymd.theming import ThemableBehavior, ThemeManager
-
 from kivymd.elevationbehavior import RectangularElevationBehavior
 from kivymd.button import MDFlatButton
-from kivymd.menu import MDDropdownMenu
+
+from kivyic import path
+from kivyic.filebrowser import FileExplorer, get_home_directory
 
 Builder.load_file(path + '/dialog.kv')
 
-
+__all__ = ['ICDialog', 'FileExplorerDialog', 'DialogOKDismiss']
 
 class InputDialog(MDTextField):
-    #note_input = ObjectProperty()
+    """
+    A text input field to be inserted into a dialog box
+    """
     height_input = NumericProperty()
-    #text_input = ObjectProperty()
-    #text = StringProperty()
-    #hint_text = StringProperty()
-    #helper_text = StringProperty()
-
-    def __init__(self, text, **kwargs):
-        super(InputDialog, self).__init__(**kwargs)
-        #self.note_input.text = text
-        #Clock.schedule_once(
-        #    self.bind(text=self.setter(self.text_input.text)))
 
 
-class EditNotesPopup(MDDialog):
-    def __init__(self, title, secondary_text, caller, **kwargs):
-        super(EditNotesPopup, self).__init__(**kwargs)
-        content = InputDialog(text=secondary_text)
-        self.title = title
-        self.content = content
-
-        self.add_action_button("OK",
-                               action=lambda *x: caller.add_task_container(self.title,
-                                                                           self.content.note_input.text))
-        self.add_action_button("Dismiss",
-                               action=lambda *x: self.dismiss())
+#class EditNotesPopup(MDDialog):
+#    def __init__(self, title, secondary_text, caller, **kwargs):
+#        super(EditNotesPopup, self).__init__(**kwargs)
+#        content = InputDialog(text=secondary_text)
+#        self.title = title
+#        self.content = content#
+#
+#        self.add_action_button("OK",
+#                               action=lambda *x: caller.add_task_container(self.title,
+#                                                                           self.content.note_input.text))
+#        self.add_action_button("Dismiss",
+#                               action=lambda *x: self.dismiss())
 
 
 class ICDialog(ThemableBehavior, RectangularElevationBehavior, ModalView):
+    """
+    Dialog box
+    """
     title = StringProperty('KivyIC Dialog Box')
     '''Title of the Dialog Box.
 
@@ -89,7 +81,6 @@ class ICDialog(ThemableBehavior, RectangularElevationBehavior, ModalView):
         self.bind(_action_buttons=self._update_action_buttons,
                   auto_dismiss=lambda *x: setattr(self.shadow, 'on_release',
                                                   self.shadow.dismiss if self.auto_dismiss else None))
-
 
     def add_action_button(self, text, action=None):
         """Add an :class:`FlatButton` to the right of the action area.
@@ -178,11 +169,6 @@ class ICDialog(ThemableBehavior, RectangularElevationBehavior, ModalView):
         if value is None or self.content is None:
             return
         self._container.clear_widgets()
-        #self._container.size_hint = {'window': (1, 1), 'items': (1, None)}[self.content_fit]
-        #self._container.height = {'window': 0, 'items': self._container.minimum_height}[self.content_fit]
-        print(self._container.size)
-
-
         self._container.add_widget(self.content)
 
     def on_touch_down(self, touch):
@@ -203,7 +189,6 @@ class FileExplorerDialog(ICDialog):
     initial_directory = StringProperty()    # starting directory for file dialog
     filter = ListProperty()                 # file filter list
     filter_index = NumericProperty(2)       # current active file filter, defaults to all *.*
-    #action_buttons = ListProperty()         # Buttons in the dialog
     file_name = StringProperty()            # Name of selected file
 
     def __init__(self, **kwargs):
@@ -241,30 +226,35 @@ class FileExplorerDialog(ICDialog):
 
 
 class DialogOKDismiss(MDDialog):
+    """
+    Ok - Dismiss Dialog with Input Text field
+
+    Parameters:
+        text: str: value of input text field
+        secondary_text: str: value of text under input field
+        helper_text: str: helper text to provide feedback to user
+    """
     text = StringProperty()
     secondary_text = StringProperty()
-    #ok = ObjectProperty()
-
-    __events__ = ('on_ok', 'on_open', 'on_dismiss')
-
+    helper_text = StringProperty()
+    response = BooleanProperty()
+    # WORKING HERE - getting helper text set an working, confirm other vars set properly
+    # TOFIX - secondary text should default to '' not this field is required
     def __init__(self, **kwargs):
         super(DialogOKDismiss, self).__init__(**kwargs)
-        #self.register_event_type('on_ok')
-        content = InputDialog(text=self.text)
-        self.text = 'default'
+        content = InputDialog(text=self.text, secondary_text=self.secondary_text,
+                              helper_text=self.helper_text)
+        self.text = 'OK Dismiss Dialog'
         self.bind(text=self.setter(content.text))
         self.content = content
         self.add_action_button("OK",
-                               action=lambda *x: self.ok())
+                               action=lambda *x: self.click(True))
         self.add_action_button("Dismiss",
-                               action=lambda *x: self.dismiss())
-        self.content.focus=True
+                               action=lambda *x: self.click(False))
+        self.content.focus = True
 
-    def ok(self):
-        self.dispatch('on_ok')
-        return
-
-    def on_ok(self):
+    def click(self, response):
+        self.response = response
         self.dismiss()
 
 

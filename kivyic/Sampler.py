@@ -13,7 +13,7 @@ main_kv = '''
 #:import NavigationDrawerDivider kivymd.navigationdrawer.NavigationDrawerDivider
 #:import NavigationDrawerToolbar kivymd.navigationdrawer.NavigationDrawerToolbar
 
-#:import ICDropDown kivyic.menu.ICDropdown
+#:import ICDropdown kivyic.menu.ICDropdown
 #:import DialogOKDismiss kivyic.dialog.DialogOKDismiss
 #:import OneLineTextInputItem kivyic.textfields.OneLineTextInputItem
 #:import ICFilterPanel kivyic.filteric.ICFilterPanel
@@ -147,6 +147,13 @@ NavigationLayout:
                         pos_hint: {'center_x': 0.5}
                         text: 'File Explorer'
                         on_release: app.open_file_dialog() 
+                    Button:
+                        size_hint: None, None
+                        height: '48dp'
+                        width: '100dp'
+                        pos_hint: {'center_x': 0.5}
+                        text: 'Dialog'
+                        on_release: ICDialog().open(self)                        
             Screen:
                 name: 'menu'
                 MDRaisedButton:
@@ -183,7 +190,7 @@ NavigationLayout:
                     text: 'Drop Down'
                     opposite_colors: True
                     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                    on_release: ICDropDown(items=app.menu_items, width_mult=5).open(self)
+                    on_release: ICDropdown(items=app.menu_items, width_mult=5).open(self)
             Screen:
                 name: 'blank'
                 GridLayout:
@@ -215,7 +222,7 @@ class Sampler(App):
          'text': 'Example item'},
         {'viewclass': 'ICFilterMenuItem',
          'text': 'Example item'},
-        {'viewclass': 'ICMenuItem',
+        {'viewclass': 'ICFilterMenuItem',
          'text': 'MENU ITEM'},
     ]
     def build(self):
@@ -236,6 +243,10 @@ class Sampler(App):
         widget.ids.filter.add_filter('Sub:', ['Homework', 'Lawn care'])
         widget.ids.filter.add_filter('Type:', ['pdf', 'txt'])
         widget.ids.filter.add_filter('Cat:', ['Workshop', 'Home'])
+
+    def output_results(self, *args):
+        for a in args:
+            print(a)
 
 if __name__ == '__main__':
     Sampler().run()

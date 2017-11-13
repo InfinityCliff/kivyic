@@ -1,3 +1,4 @@
+# ver 0.0.0
 from kivy.uix.widget import Widget
 from kivy.graphics import Rectangle, Color
 from kivy.graphics.instructions import InstructionGroup

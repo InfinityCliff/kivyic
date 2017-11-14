@@ -33,8 +33,8 @@ class InputDialog(MDTextField):
     """
     A text input field to be inserted into a dialog box
     """
-    height_input = NumericProperty()
-
+    #height_input = NumericProperty()
+    pass
 
 #class EditNotesPopup(MDDialog):
 #    def __init__(self, title, secondary_text, caller, **kwargs):
@@ -235,23 +235,28 @@ class DialogOKDismiss(MDDialog):
         helper_text: str: helper text to provide feedback to user
     """
     text = StringProperty()
-    secondary_text = StringProperty()
-    helper_text = StringProperty()
+    #secondary_text = StringProperty()
+    #hint_text = StringProperty()
+    #helper_text = StringProperty()
     response = BooleanProperty()
+
     # WORKING HERE - getting helper text set an working, confirm other vars set properly
     # TOFIX - secondary text should default to '' not this field is required
     def __init__(self, **kwargs):
         super(DialogOKDismiss, self).__init__(**kwargs)
-        content = InputDialog(text=self.text, secondary_text=self.secondary_text,
-                              helper_text=self.helper_text)
-        self.text = 'OK Dismiss Dialog'
+        content = InputDialog(hint_text='hint text', helper_text='helper text')
+        #content.text = self.text
+        content.hint_text = 'hint text'
+        content.helper_text = 'helper text'
+
+        #self.text = 'OK Dismiss Dialog'
         self.bind(text=self.setter(content.text))
         self.content = content
         self.add_action_button("OK",
                                action=lambda *x: self.click(True))
         self.add_action_button("Dismiss",
                                action=lambda *x: self.click(False))
-        self.content.focus = True
+        #self.content.focus = True
 
     def click(self, response):
         self.response = response

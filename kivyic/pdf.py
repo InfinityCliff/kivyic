@@ -12,5 +12,5 @@
 # Wand
 # https://stackoverflow.com/questions/37299666/python-converting-pdf-to-image
 
-from wand.image import Image
+
 

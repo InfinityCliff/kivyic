@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Dialog controls
-"""
 
 import os
 
@@ -15,57 +12,53 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.animation import Animation
 from kivy.uix.modalview import ModalView
 from kivy.uix.popup import PopupException
+from kivy.clock import Clock
 
-from kivymd.dialog import MDDialog
 from kivymd.textfields import MDTextField
 from kivymd.theming import ThemableBehavior, ThemeManager
 from kivymd.elevationbehavior import RectangularElevationBehavior
 from kivymd.button import MDFlatButton
 
 from kivyic import path
-from kivyic.filebrowser import FileExplorer, get_home_directory
+from kivyic.fileexplorer import FileExplorer, get_home_directory
+
+from functools import partial
 
 Builder.load_file(path + '/dialog.kv')
 
 __all__ = ['ICDialog', 'FileExplorerDialog', 'DialogOKDismiss']
+__version__ = '0.1'
 
+# BUG - helper text and hint text can not be set from python, only in kv, NEED TO TEST
 class InputDialog(MDTextField):
     """
     A text input field to be inserted into a dialog box
     """
-    #height_input = NumericProperty()
     pass
-
-#class EditNotesPopup(MDDialog):
-#    def __init__(self, title, secondary_text, caller, **kwargs):
-#        super(EditNotesPopup, self).__init__(**kwargs)
-#        content = InputDialog(text=secondary_text)
-#        self.title = title
-#        self.content = content#
-#
-#        self.add_action_button("OK",
-#                               action=lambda *x: caller.add_task_container(self.title,
-#                                                                           self.content.note_input.text))
-#        self.add_action_button("Dismiss",
-#                               action=lambda *x: self.dismiss())
 
 
 class ICDialog(ThemableBehavior, RectangularElevationBehavior, ModalView):
     """
-    Dialog box
+    Dialog box with the ability to add action buttons
     """
     title = StringProperty('KivyIC Dialog Box')
-    '''Title of the Dialog Box.
+    '''
+    Title of the Dialog Box.
 
     :attr:`title` is an :class:`~kivy.properties.StringProperty` and
     defaults to 'KivyIC Dialog Box'.
+    
+    .. versionadded:: 0.1
     '''
 
     content = ObjectProperty(None)
-    '''Container widget for what will be displayed in the Dialog Box.
+    '''
+    Container widget for what will be displayed in the Dialog Box.
 
     :attr:`content` is an :class:`~kivy.properties.ObjectProperty` and
     defaults to None.
+    
+    .. versionadded:: 0.1
     '''
 
     content_fit = OptionProperty('items', options=['window', 'items'])
@@ -74,9 +67,9 @@ class ICDialog(ThemableBehavior, RectangularElevationBehavior, ModalView):
     _container = ObjectProperty()
     _action_buttons = ListProperty([])
     _action_area = ObjectProperty()
+    action_area_width = NumericProperty()
 
     def __init__(self, **kwargs):
-        print(kwargs)
         super().__init__(**kwargs)
         self.bind(_action_buttons=self._update_action_buttons,
                   auto_dismiss=lambda *x: setattr(self.shadow, 'on_release',
@@ -95,7 +88,7 @@ class ICDialog(ThemableBehavior, RectangularElevationBehavior, ModalView):
                               height=dp(36))
         if action:
             button.bind(on_release=action)
-        # FIXME - fix color
+        # FIX - fix color
         button.text_color = self.theme_cls.primary_color
         button.md_bg_color = self.theme_cls.bg_light
         self._action_buttons.append(button)
@@ -178,85 +171,166 @@ class ICDialog(ThemableBehavior, RectangularElevationBehavior, ModalView):
 
     def _update_action_buttons(self, *args):
         self._action_area.clear_widgets()
+        self.action_area_width = 0
         for btn in self._action_buttons:
             btn.content.texture_update()
             btn.width = btn.content.texture_size[0] + dp(16)
+            self.action_area_width += btn.width
             self._action_area.add_widget(btn)
-
+        spacing = sum(self._action_area.spacing) - self._action_area.spacing[0]
+        self.action_area_width += spacing
 
 class FileExplorerDialog(ICDialog):
-    title = StringProperty()                # dialog box title
-    initial_directory = StringProperty()    # starting directory for file dialog
-    filter = ListProperty()                 # file filter list
-    filter_index = NumericProperty(2)       # current active file filter, defaults to all *.*
-    file_name = StringProperty()            # Name of selected file
+    title = StringProperty('File Explorer Dialog')
+    '''
+    Title of the dialog window.
+    
+    :data:`title` is an :class:`~kivy.properties.StringProperty`,
+    defaults to 'File Explorer Dialog'.
+    .. version added:: 0.1
+    '''
 
+    # FIX - works on windows, need to set to $Home on Linux
+    initial_directory = StringProperty()
+    '''
+    Starting directory for file explorer.
+
+    :data:`initial_directory` is an :class:`~kivy.properties.StringProperty`,
+    defaults to 'C:/Users/<user name>/' for windows, $HOME for Linux.
+    .. version added:: 0.1
+    '''
+
+    filter = ListProperty()
+    '''
+    Filter to apply to files shown in file view.
+
+    :data:`filter` is an :class:`~kivy.properties.ListProperty`,
+    defaults to '*.*'.
+     
+    .. version added:: 0.1
+    '''
+
+    # TODO -- v 0.2 - add ability to select multiple files
+    file_name_s = StringProperty()
+    '''
+    Name of selected file(s).  If multiple files are selected, each file will
+    be separated by a comma.
+
+    :data:`file_name_s` is an :class:`~kivy.properties.StringProperty`,
+    defaults to ''.
+     
+    .. version added:: 0.1
+    '''
     def __init__(self, **kwargs):
         super(FileExplorerDialog, self).__init__(**kwargs)
         user_path = os.path.join(get_home_directory(), 'Documents')
 
-
-        fileexplorer = FileExplorer(select_string='Select',
-                                    favorites=[(user_path, 'Documents')])
-        fileexplorer.bind(on_success=self._fbrowser_success,
-                          on_canceled=self._fbrowser_canceled,
-                          on_submit=self._fbrowser_submit)
-        fileexplorer.file_selection_container.clear_widgets()
-        self.content = fileexplorer
+        file_explorer = FileExplorer(select_string='Select',
+                                     favorites=[(user_path, 'Documents')])
+        file_explorer.bind(on_success=self._fbrowser_success,
+                           on_canceled=self._fbrowser_canceled,
+                           on_submit=self._fbrowser_submit)
+        file_explorer.file_selection_container.clear_widgets()
+        self.content = file_explorer
 
         self.add_action_button("Dismiss",
-                               action=lambda *x: fileexplorer.dispatch('on_canceled'))
+                               action=lambda *x: file_explorer.dispatch('on_canceled'))
         self.add_action_button("OK",
-                               action=lambda *x: fileexplorer.dispatch('on_success'))
+                               action=lambda *x: file_explorer.dispatch('on_success'))
+
+        Clock.schedule_once(partial(self._post_init, file_explorer))
+
+    def _post_init(self, file_explorer, *args):
+        file_explorer.filter_button.width = self.action_area_width
 
     def _fbrowser_canceled(self, instance):
         self.dismiss()
 
     def _fbrowser_success(self, instance):
-        self.file_name = instance.selection[0]
+        # ERR - self.file_name_s = instance.selection[0] / IndexError: list index out of range
+        self.file_name_s = instance.selection[0]
         self.dismiss()
 
     def _fbrowser_submit(self, instance):
-        self.file_name = instance.selection[0]
+        self.file_name_s = instance.selection[0]
         self.dismiss()
 
     def add_button(self, buttons):
+        """
+        add action butttons via a dict
+        :param buttons: dict: {button name: action}
+        :return: None
+        """
         for text, action in buttons.items():
             self.add_action_button(text, action=lambda *x: action())
 
 
-class DialogOKDismiss(MDDialog):
+class DialogOKDismiss(ICDialog):
     """
     Ok - Dismiss Dialog with Input Text field
 
     Parameters:
         text: str: value of input text field
-        secondary_text: str: value of text under input field
         helper_text: str: helper text to provide feedback to user
+        hint_text: str: to provide feedback to user
+
+    Usage:
+        bind to response to determine user action, true if click OK false if Dismiss
+        bind to text to get information typed
     """
     text = StringProperty()
-    #secondary_text = StringProperty()
-    #hint_text = StringProperty()
-    #helper_text = StringProperty()
-    response = BooleanProperty()
+    '''
+    String in the Input Text Field. Can be used to set of retrieve data.
 
-    # WORKING HERE - getting helper text set an working, confirm other vars set properly
-    # TOFIX - secondary text should default to '' not this field is required
+    :data:`text` is an :class:`~kivy.properties.StringProperty`,
+    defaults to ''.
+     
+    .. version added:: 0.1
+    '''
+
+    hint_text = StringProperty()
+    '''
+    Text that will show in text input prior to receiving focus, setting mode
+    to persistant will cause to raise above input line while user is typing.
+
+    :data:`hint_text` is an :class:`~kivy.properties.StringProperty`,
+    defaults to ''.
+     
+    .. version added:: 0.1
+    '''
+
+    helper_text = StringProperty()
+    '''
+    Text that will show below text input. Text will stay before and after focus
+
+    :data:`helper_text` is an :class:`~kivy.properties.StringProperty`,
+    defaults to ''.
+     
+    .. version added:: 0.1
+    '''
+
+    response = BooleanProperty()
+    '''
+    Stores action of user when exiting dialog.  
+    True if user clicks ok.
+    False if user clicks Dismiss.
+
+    :data:`response` is an :class:`~kivy.properties.BooleanProperty`,
+     
+    .. version added:: 0.1
+    '''
+
     def __init__(self, **kwargs):
         super(DialogOKDismiss, self).__init__(**kwargs)
-        content = InputDialog(hint_text='hint text', helper_text='helper text')
-        #content.text = self.text
-        content.hint_text = 'hint text'
-        content.helper_text = 'helper text'
-
-        #self.text = 'OK Dismiss Dialog'
+        content = InputDialog(hint_text=self.hint_text,
+                              helper_text=self.helper_text)
         self.bind(text=self.setter(content.text))
         self.content = content
         self.add_action_button("OK",
                                action=lambda *x: self.click(True))
         self.add_action_button("Dismiss",
                                action=lambda *x: self.click(False))
-        #self.content.focus = True
+        self.content.focus = True
 
     def click(self, response):
         self.response = response

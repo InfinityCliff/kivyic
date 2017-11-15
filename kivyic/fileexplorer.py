@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 '''
 FileExplorer
-===========
+============
 
 The :class:`FileExplorer` widget is an advanced file browser. You use it
 similarly to FileChooser usage.
@@ -14,32 +14,6 @@ custom paths to be added to the shortcuts list.
 To create a FileExplorer which prints the currently selected file as well as
 the current text in the filename field when 'Select' is pressed, with
 a shortcut to the Documents directory added to the favorites bar::
-
-    import os
-    from kivy.app import App
-
-    class TestApp(App):
-
-        def build(self):
-            user_path = os.path.join(get_home_directory(), 'Documents')
-            fe = FileExplorer(select_string='Select',
-                              favorites=[(user_path, 'Documents')])
-            fe.bind(on_success=self._fbrowser_success,
-                    on_canceled=self._fbrowser_canceled,
-                    on_submit=self._fbrowser_submit)
-
-            return fe
-
-        def _fbrowser_canceled(self, instance):
-            print('cancelled, Close self.')
-
-        def _fbrowser_success(self, instance):
-            print(instance.selection)
-
-        def _fbrowser_submit(self, instance):
-            print(instance.selection)
-
-    TestApp().run()
 
 :Events:
     `on_canceled`:
@@ -56,7 +30,7 @@ a shortcut to the Documents directory added to the favorites bar::
 '''
 
 __all__ = ('FileExplorer', )
-__version__ = '0.0-dev'
+__version__ = '0.1'
 
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.treeview import TreeViewLabel, TreeView
@@ -84,8 +58,12 @@ from os import walk
 from sys import getfilesystemencoding
 from functools import partial
 
+from kivymd.theming import ThemeManager
+
 from kivyic import path
 from kivyic.menu import ICDropdown
+
+from kivyic.debug import color_canvas
 
 if platform == 'win':
     from ctypes import windll, create_unicode_buffer
@@ -138,7 +116,7 @@ def get_drives():
     return drives
 
 
-Builder.load_file(path + '/filebrowser.kv')
+Builder.load_file(path + '/fileexplorer.kv')
 
 
 class TreeLabel(TreeViewLabel):
@@ -225,7 +203,6 @@ class LinkTree(TreeView):
                 self.add_node(tl, favs)
 
     def trigger_populate(self, node):
-        print('repopulating')
         app = App.get_running_app()
         if not node.path or node.nodes:
             return
@@ -276,7 +253,11 @@ class FileExplorer(BoxLayout):
     file_layout = ObjectProperty()
     filter_button = ObjectProperty()
     file_selection_container = ObjectProperty()
+    file_browser_container = ObjectProperty()
+
     dropdown = ObjectProperty()
+    # FIX - button width should remain constant, however it changes with menu selection
+    #_filter_button_width = NumericProperty()
 
     __events__ = ('on_canceled', 'on_success', 'on_submit')
 
@@ -287,13 +268,16 @@ class FileExplorer(BoxLayout):
     button.
 
     :data:`select_state` is an :class:`~kivy.properties.OptionProperty`.
+    .. version added:: 0.1
     '''
+
     cancel_state = OptionProperty('normal', options=('normal', 'down'))
     '''State of the 'cancel' button, must be one of 'normal' or 'down'.
     The state is 'down' only when the button is currently touched/clicked,
     otherwise 'normal'. This button functions as the typical cancel button.
 
     :data:`cancel_state` is an :class:`~kivy.properties.OptionProperty`.
+    .. version added:: 0.1
     '''
 
     select_string = StringProperty('Ok')
@@ -301,6 +285,8 @@ class FileExplorer(BoxLayout):
 
     :data:`select_string` is an :class:`~kivy.properties.StringProperty`,
     defaults to 'Ok'.
+    
+    .. version added:: 0.1
     '''
 
     cancel_string = StringProperty('Cancel')
@@ -308,6 +294,8 @@ class FileExplorer(BoxLayout):
 
     :data:`cancel_string` is an :class:`~kivy.properties.StringProperty`,
     defaults to 'Cancel'.
+    
+    .. version added:: 0.1
     '''
 
     filename = StringProperty('')
@@ -318,7 +306,7 @@ class FileExplorer(BoxLayout):
     :data:`filename` is an :class:`~kivy.properties.StringProperty`,
     defaults to ''.
 
-    .. versionchanged:: 1.1
+    .. version added:: 0.1
     '''
 
     selection = ListProperty([])
@@ -326,7 +314,7 @@ class FileExplorer(BoxLayout):
     Contains the list of files that are currently selected in the current tab.
     See :kivy_fchooser:`kivy.uix.filechooser.FileChooserController.selection`.
 
-    .. versionchanged:: 1.1
+    .. version added:: 0.1
     '''
 
     path = StringProperty(u'/')
@@ -336,7 +324,7 @@ class FileExplorer(BoxLayout):
     browser should refer to.
     See :kivy_fchooser:`kivy.uix.filechooser.FileChooserController.path`.
 
-    .. versionadded:: 1.1
+    .. version added:: 0.1
     '''
 
     filters = ListProperty([])
@@ -347,7 +335,7 @@ class FileExplorer(BoxLayout):
     Filering keywords that the user types into the filter field as a comma
     separated list will be reflected here.
 
-    .. versionadded:: 1.1
+    .. version added:: 0.1
     '''
 
     filter_dirs = BooleanProperty(False)
@@ -357,7 +345,7 @@ class FileExplorer(BoxLayout):
     See
     :kivy_fchooser:`kivy.uix.filechooser.FileChooserController.filter_dirs`.
 
-    .. versionadded:: 1.1
+    .. version added:: 0.1
     '''
 
     show_hidden = BooleanProperty(False)
@@ -367,7 +355,7 @@ class FileExplorer(BoxLayout):
     See
     :kivy_fchooser:`kivy.uix.filechooser.FileChooserController.show_hidden`.
 
-    .. versionadded:: 1.1
+    .. version added:: 0.1
     '''
 
     multiselect = BooleanProperty(False)
@@ -377,7 +365,7 @@ class FileExplorer(BoxLayout):
     See
     :kivy_fchooser:`kivy.uix.filechooser.FileChooserController.multiselect`.
 
-    .. versionadded:: 1.1
+    .. version added:: 0.1
     '''
 
     dirselect = BooleanProperty(False)
@@ -387,7 +375,7 @@ class FileExplorer(BoxLayout):
     See
     :kivy_fchooser:`kivy.uix.filechooser.FileChooserController.dirselect`.
 
-    .. versionadded:: 1.1
+    .. version added:: 0.1
     '''
 
     rootpath = StringProperty(None, allownone=True)
@@ -399,7 +387,7 @@ class FileExplorer(BoxLayout):
     :class:`~kivy.properties.StringProperty`, defaults to None.
     See :kivy_fchooser:`kivy.uix.filechooser.FileChooserController.rootpath`.
 
-    .. versionadded:: 1.1
+    .. version added:: 0.1
     '''
 
     favorites = ListProperty([])
@@ -410,6 +398,8 @@ class FileExplorer(BoxLayout):
 
     :data:`favorites` is an :class:`~kivy.properties.ListProperty`,
     defaults to '[]'.
+    
+    .. version added:: 0.1
     '''
 
     file_type_filters = [
@@ -452,6 +442,7 @@ class FileExplorer(BoxLayout):
                                          multiselect=partial(self._attr_callback, 'multiselect'),
                                          dirselect=partial(self._attr_callback, 'dirselect'),
                                          rootpath=partial(self._attr_callback, 'rootpath'))
+
         for node in self.ids.link_tree.iterate_all_nodes():
 
             if isinstance(node, TreeLabel):
@@ -459,6 +450,8 @@ class FileExplorer(BoxLayout):
 
     def _attr_callback(self, attr, obj, value):
         setattr(self, attr, getattr(obj, attr))
+        if len(self.file_selection_container.children) > 0:
+            self.file_browser_container.clear_widgets()
 
     def update_path(self, instance, new_path):
         new_path = os.path.abspath(new_path)
@@ -476,7 +469,7 @@ if __name__ == '__main__':
     from kivy.app import App
 
     class TestApp(App):
-
+        theme_cls = ThemeManager()
         def build(self):
             user_path = os.path.join(get_home_directory(), 'Documents')
             fe = FileExplorer(select_string='Select',
@@ -491,7 +484,6 @@ if __name__ == '__main__':
             print('cancelled, Close self.')
 
         def _fbrowser_success(self, instance):
-            print(instance.selection)
             print('path', instance.path)
 
         def _fbrowser_submit(self, instance):

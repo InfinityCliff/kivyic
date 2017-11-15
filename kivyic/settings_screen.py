@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.metrics import dp, sp
@@ -36,6 +37,13 @@ from kivyic.toolbar import Toolbar
 # custom settings
 # http://cheparev.com/kivy-receipt-custom-settings/
 
+# TODO - need to test and determine what is current and what needs to go, did a big overall
+# and a lot needs to go
+
+__all__ = ['ICSettingBehaviour', 'ICSettingBoolean', 'ICSettingOptions',
+           'SettingMenu', 'ICInterfaceWithCloseButton', 'ICInterfaceWithSpinner',
+           'ICSettingsWithSpinner', 'ICSettingsWithCloseButton']
+__version__ = '0.0'
 
 Builder.load_string('''
 #: include ''' + path + '''/settings_screen.kv

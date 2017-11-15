@@ -1,10 +1,13 @@
+# -*- coding: utf-8 -*-
+
 from kivy.app import App
 from kivy.lang import Builder
+from kivy.metrics import dp
 
 from kivymd.theming import ThemeManager
-from kivymd.dialog import MDDialog
+from kivymd.label import MDLabel
 
-from kivyic.filebrowser import FileExplorer
+from kivyic.dialog import ICDialog
 
 
 main_kv = '''
@@ -13,13 +16,14 @@ main_kv = '''
 #:import NavigationDrawerDivider kivymd.navigationdrawer.NavigationDrawerDivider
 #:import NavigationDrawerToolbar kivymd.navigationdrawer.NavigationDrawerToolbar
 
-#:import ICDropdown kivyic.menu.ICDropdown
-#:import DialogOKDismiss kivyic.dialog.DialogOKDismiss
-#:import OneLineTextInputItem kivyic.textfields.OneLineTextInputItem
-#:import ICFilterPanel kivyic.filteric.ICFilterPanel
-#:import FileExplorer kivyic.filebrowser.FileExplorer
-#:import get_home_directory kivyic.filebrowser.get_home_directory
-#:import color_canvas kivyic.debug.color_canvas
+#:import ICDropdown             kivyic.menu.ICDropdown
+#:import OneLineTextInputItem   kivyic.textfields.OneLineTextInputItem
+#:import ICFilterPanel          kivyic.filtering.ICFilterPanel
+#:import DialogOKDismiss        kivyic.dialog.DialogOKDismiss
+#:import FileExplorerDialog     kivyic.dialog.FileExplorerDialog
+
+#:import get_home_directory     kivyic.fileexplorer.get_home_directory
+#:import color_canvas           kivyic.debug.color_canvas
 
 NavigationLayout:
     id: nav_layout
@@ -72,6 +76,7 @@ NavigationLayout:
                     ScrollView:
                         do_scroll_x: False
                         MDList:
+                            TextInput:
                             ICSearchInput:
                             OneLineListItem:
                                 text: 'OneLineListItem KivyMD'
@@ -138,22 +143,22 @@ NavigationLayout:
                         height: '48dp'
                         width: '100dp'
                         pos_hint: {'center_x': 0.5}
+                        text: 'Dialog'
+                        on_release: app.open_icdialog()                        
+                    Button:
+                        size_hint: None, None
+                        height: '48dp'
+                        width: '100dp'
+                        pos_hint: {'center_x': 0.5}
                         text: 'OK Dialog'
-                        on_release: DialogOKDismiss().open()
+                        on_release: DialogOKDismiss(title='OK Dismiss Input Dialog', hint_text='Hint Text', helper_text='Helper Text').open()
                     Button:
                         size_hint: None, None
                         height: '48dp'
                         width: '100dp'
                         pos_hint: {'center_x': 0.5}
                         text: 'File Explorer'
-                        on_release: app.open_file_dialog() 
-                    Button:
-                        size_hint: None, None
-                        height: '48dp'
-                        width: '100dp'
-                        pos_hint: {'center_x': 0.5}
-                        text: 'Dialog'
-                        on_release: ICDialog().open(self)                        
+                        on_release: FileExplorerDialog().open() 
             Screen:
                 name: 'menu'
                 MDRaisedButton:
@@ -162,35 +167,37 @@ NavigationLayout:
                     text: 'Drop Down'
                     opposite_colors: True
                     pos_hint: {'center_x': 0.1, 'center_y': 0.9}
-                    on_release: ICDropDown(items=app.menu_items, width_mult=5).open(self)
+                    on_release: ICDropdown(items=app.menu_items, width_mult=5).open(self)
                 MDRaisedButton:
                     size_hint: None, None
                     size: 3 * dp(48), dp(48)
                     text: 'Drop Down'
                     opposite_colors: True
                     pos_hint: {'center_x': 0.1, 'center_y': 0.1}
-                    on_release: ICDropDown(items=app.menu_items, width_mult=5).open(self)
+                    on_release: ICDropdown(items=app.menu_items, width_mult=5).open(self)
                 MDRaisedButton:
                     size_hint: None, None
                     size: 3 * dp(48), dp(48)
                     text: 'Drop Down'
                     opposite_colors: True
                     pos_hint: {'center_x': 0.9, 'center_y': 0.1}
-                    on_release: ICDropDown(items=app.menu_items, width_mult=5).open(self)
+                    on_release: ICDropdown(items=app.menu_items, width_mult=5).open(self)
                 MDRaisedButton:
                     size_hint: None, None
                     size: 3 * dp(48), dp(48)
                     text: 'Drop Down'
                     opposite_colors: True
                     pos_hint: {'center_x': 0.9, 'center_y': 0.9}
-                    on_release: ICDropDown(items=app.menu_items, width_mult=5).open(self)
-                MDRaisedButton:
+                    on_release: ICDropdown(items=app.menu_items, width_mult=5).open(self)
+                ICDropdownButton:
                     size_hint: None, None
                     size: 3 * dp(48), dp(48)
-                    text: 'Drop Down'
+                    text: 'Drop Down Button'
                     opposite_colors: True
                     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                    on_release: ICDropdown(items=app.menu_items, width_mult=5).open(self)
+                    items: app.menu_items
+                    width_mult: 5
+                    #on_release: ICDropDown(items=app.menu_items, width_mult=5).open(self)
             Screen:
                 name: 'blank'
                 GridLayout:
@@ -230,13 +237,15 @@ class Sampler(App):
         self.build_sample_filter(main_widget)
         return main_widget
 
-    def open_file_dialog(self):
-        #user_path = get_home_directory()
-        fe = FileExplorer()
-        mv = MDDialog(size_hint=(.8,.8), content=fe, title='File Explorer')
-        mv.add_action_button("Dismiss",
-                             action=lambda *x: mv.dismiss())
-        mv.open()
+    def open_icdialog(self):
+        d = ICDialog(size_hint=(.8, .8))
+        text = "Add your content here \n\nClick outside the dialog to close"
+        content = MDLabel(text=text,
+                          size_hint_y=None, height=dp(30),
+                          pos_hint={'top': 1}
+                          )
+        d.content = content
+        d.open()
 
     def build_sample_filter(self, widget):
         widget.ids.filter.add_filter('Cat:', ['Work Work Work', 'Home'])

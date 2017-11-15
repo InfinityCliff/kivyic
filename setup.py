@@ -5,7 +5,7 @@ setup(
         version='0.0',
         packages=['kivyic'],
         url='https://github.com/InfinityCliff/kivyic',
-        license='',
+        license='MIT',
         author='Infinity Cliff',
         author_email='kevin.williams@InfinityCliff.com',
         description='Implementation of Kivy',

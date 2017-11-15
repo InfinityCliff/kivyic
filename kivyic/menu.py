@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from kivy.lang import Builder
 from kivy.animation import Animation
 from kivy.core.window import Window
@@ -11,13 +13,16 @@ from kivy.uix.behaviors.button import ButtonBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivy.clock import Clock
 
-from kivymd.button import MDFlatButton
+from kivymd.button import MDFlatButton, MDRaisedButton
 import kivymd.material_resources as m_res
 from kivymd.theming import ThemableBehavior
 
 
 from kivyic import path
 import kivyic.material_resources as icm_res
+
+__all__ = ['ICMenu', 'ICDropdown', 'ICDropdownButton']
+__version__ = '0.1'
 
 Builder.load_file(path + '/menu.kv')
 
@@ -52,7 +57,6 @@ menu_viewclass_def = {'ICMenuItem': ICMenuItem,
                       'ICFilterMenuItem': ICMenuFilterItem}
 
 
-# TOFIX - menu height is too large, loot at display_menu function in dropdown
 class ICMenu(BoxLayout):
     data = ListProperty()
     width_mult = NumericProperty(1)
@@ -215,12 +219,13 @@ class ICDropdown(ThemableBehavior, BoxLayout):
         Window.remove_widget(self)
 
 
-class ICDropdownButton(MDFlatButton):
+class ICDropdownButton(MDRaisedButton):
     selected_value = ListProperty()
     dropdown = ObjectProperty()
+    items = ListProperty()
 
     def open_dropdown_menu(self):
-        self.dropdown = ICDropdown(items=self.file_type_filters, width_mult=4)
+        self.dropdown = ICDropdown(items=self.items, width_mult=4)
 
         self.dropdown.bind(selected_value=self.update_return_value)
         self.dropdown.open(self)

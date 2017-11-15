@@ -3,22 +3,11 @@
 #:import os os
 
 <InputDialog>:
-    size_hint_y: None
+    pos_hint: {'top' : 1}
     multiline: False
-    #helper_text: 'Click Dismiss to cancel and return nothing'
-    #helper_text: root.helper_text
-    #helper_text_mode: "persistent"
-    #hint_text: 'hint'
-
-    hint_text: "Persistent helper text"
-    helper_text: "Text is always here"
+    helper_text: root.helper_text
     helper_text_mode: "persistent"
-    canvas.after:
-        Color:
-            rgba: 1,0,0,.3
-        Rectangle:
-            size: self.size
-            pos: self.pos
+    hint_text: root.hint_text
 
 #<EditNotesPopup>:
 #    size_hint: .8, None

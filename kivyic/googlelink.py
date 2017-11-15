@@ -21,6 +21,9 @@ try:
 except ImportError:
     flags = None
 
+__all__ = []
+__version__ = '0.0'
+
 
 class GoogleLinkScreen(Screen):
     pass

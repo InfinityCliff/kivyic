@@ -4,6 +4,9 @@ from kivy.core.window import Window
 from kivy.metrics import dp
 from kivymd import fonts_path
 
+__all__ = []
+__version__ = '0.1'
+
 if platform != "android" and platform != "ios":
     DEVICE_TYPE = "desktop"
 elif Window.width >= dp(600) and Window.height >= dp(600):

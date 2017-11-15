@@ -26,8 +26,16 @@ import kivymd.material_resources as m_res
 
 Builder.load_file(path + '/textfields.kv')
 
+__all__ = ['ICTextFieldPlain', 'OneLineTextInputItem', 'TwoLineTextInputItem', 'ThreeLineTextInputItem',
+           'OneLineAvatarTextInputItem', 'TwoLineAvatarTextInputItem', 'ThreeLineAvatarTextInputItem',
+           'OneLineIconTextInputItem', 'TwoLineIconTextInputItem', 'ThreeLineIconTextInputItem',
+           'OneLineRightIconTextInputItem', 'TwoLineRightIconTextInputItem', 'ThreeLineRightIconTextInputitem',
+           'OneLineAvatarIconTextInputItem', 'TwoLineAvatarIconTextInputItem', 'ThreeLineAvatarIconTextInputItem',
+           'ICSearchInput']
+__version__ = '0.1'
 
-# FIXME - on selection move cursor to end of line and no text selected
+# FIX - on selection move cursor to end of line and no text selected
+# FIX - in sampler will not allow to click into textfield
 class ICTextFieldPlain(ThemableBehavior, TextInput, FocusBehavior):
     helper_text = StringProperty("This field is required")
     helper_text_mode = OptionProperty('none', options=['none', 'on_error', 'persistent', 'on_focus'])

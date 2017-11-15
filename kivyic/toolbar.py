@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from kivy.clock import Clock
 from kivy.factory import Factory
 from kivy.lang import Builder
@@ -12,6 +13,10 @@ from kivymd.button import MDIconButton
 from kivymd.theming import ThemableBehavior
 from kivymd.elevationbehavior import RectangularElevationBehavior
 
+__all__ = ['Toolbar', 'ToolbarCenter']
+__version__ = '0.1'
+
+# TODO - move to kv file
 Builder.load_string('''
 #:import m_res kivymd.material_resources
 <Toolbar>
@@ -58,6 +63,7 @@ Builder.load_string('''
 ''')
 
 
+# TODO - how is this different than KivyMD tool???
 class Toolbar(ThemableBehavior, RectangularElevationBehavior,
               SpecificBackgroundColorBehavior, BoxLayout):
     left_action_items = ListProperty()

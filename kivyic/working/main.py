@@ -7,7 +7,7 @@ from kivymd.dialog import MDDialog
 from kivymd.theming import ThemeManager
 
 from kivyic.dialog import ICDialog, FileExplorerDialog
-from kivyic.filebrowser import FileExplorer
+from kivyic.fileexplorer import FileExplorer
 from kivyic.working.my_classes import ModalViewContent
 
 main_kv = '''

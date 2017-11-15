@@ -10,7 +10,10 @@ from kivyic import path
 
 from kivymd.theming import ThemeManager
 
-Builder.load_file(path + '/filteric.kv')
+__all__ = ['ICFilterPanel']
+__version__ = '0.1'
+
+Builder.load_file(path + '/filtering.kv')
 
 
 class FilterTag(ButtonBehavior, BoxLayout):

@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
         name='kivyic',
-        version='0.1.dev1',
+        version='0.1.dev3',
         packages=['kivyic'],
         package_data={'': ['*.kv']},
         include_package_data=True,

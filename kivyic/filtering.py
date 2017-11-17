@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from kivy.app import App
 from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.uix.boxlayout import BoxLayout
@@ -71,12 +72,18 @@ class ICFilterPanel(BoxLayout):
     padding = ListProperty()
     background_color = ListProperty()
 
+    __events__ = ['on_empty_filter_list', 'on_filter_updated']
+
     def __init__(self, **kwargs):
-        self.register_event_type('on_empty_filter_list')
         super(ICFilterPanel, self).__init__(**kwargs)
+        self.register_event_type('on_empty_filter_list')
+        self.register_event_type('on_filter_updated')
         self.padding = [dp(5), dp(10), dp(5), dp(5)]
         self.kwargs_ = kwargs
         self.background_color = kwargs.get('background_color', [1, 1, 1, 1])
+
+    def on_filter_updated(self, *args):
+        print('on_filter_updated')
 
     def on_empty_filter_list(self, *args):
         pass
@@ -108,10 +115,11 @@ class ICFilterPanel(BoxLayout):
             self.height = self.minimum_height
         else:
             self.dispatch('on_empty_filter_list')
+        self.dispatch('on_filter_updated')
 
     def apply_filter(self, data):
         """
-        filtes data on previously selected filter criteria
+        filters data on previously selected filter criteria
         :param data: dict {'unique identifier': {'filter criteria name': [criteria list]}}
         :return: Sorted list
         """
@@ -124,6 +132,49 @@ class ICFilterPanel(BoxLayout):
                 else:
                     add_item = False
             if add_item:
-                filtered_list.append(criterion['name'])
+                filtered_list.append(item) #criterion['name'])
 
         return sorted(filtered_list)
+
+
+test_dict = {"apples.docx": {"category": ["Work"],
+                             "subject": ["None"],
+                             "type": ["docx"]
+                             },
+             "apples.pdf": {"category": ["None"],
+                            "subject": ["None"],
+                            "type": ["pdf"]
+                            },
+             "apples.txt": {"category": ["Home", "Work"],
+                            "subject": ["None"],
+                            "type": ["txt"]
+                            },
+             "banana.docx": {"category": ["None"],
+                             "subject": ["None"],
+                             "type": ["docx"]
+                             },
+             "banana.pdf": {"category": ["Work"],
+                            "subject": ["None"],
+                            "type": ["pdf"]
+                            },
+             "banana.txt": {"category": ["Home"],
+                            "subject": ["None"],
+                            "type": ["txt"]
+                            }
+             }
+
+class TestApp(App):
+    title = 'Filtering Test App'
+    theme_cls = ThemeManager()
+
+    def build(self):
+        self.root = BoxLayout()
+        fp = ICFilterPanel()
+        fp.add_filter('category', ['Work', 'Home'])
+        print(fp.apply_filter(test_dict))
+        self.root.add_widget(fp)
+        return self.root
+
+
+if __name__ == '__main__':
+    TestApp().run()

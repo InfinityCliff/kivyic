@@ -1,3 +1,7 @@
+#:import MDLabel        kivymd.label.MDLabel
+#:import MDList         kivymd.list.MDList
+#:import ICIconLabel    kivyic.label.ICIconLabel
+
 <FilterTag>
     orientation: 'horizontal'
     padding: '2dp',0, '8dp', 0
@@ -55,6 +59,7 @@
     spacing: root.spacing
     size_hint_y: None
     height: self.minimum_height
+    pos_hint: {'top': 1}
     canvas:
         Color:
             rgba: root.background_color

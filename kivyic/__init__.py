@@ -8,6 +8,7 @@ from kivy.properties import ListProperty
 __version_info__ = (0, 1, 6)
 __version__ = '0.1.dev6'
 
+
 path = os.path.dirname(__file__)
 #fonts_path = os.path.join(path, "fonts/")
 #images_path = os.path.join(path, 'images/')

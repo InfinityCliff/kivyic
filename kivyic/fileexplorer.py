@@ -63,7 +63,7 @@ from kivymd.theming import ThemeManager
 from kivyic import path
 from kivyic.menu import ICDropdown
 
-from kivyic.debug import color_canvas
+#from kivyic.debug import color_canvas
 
 if platform == 'win':
     from ctypes import windll, create_unicode_buffer

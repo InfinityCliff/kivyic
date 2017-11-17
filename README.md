@@ -1,7 +1,7 @@
 # kivyic
 An extension of KivyMD
 
-Latest Version 0.1
+Latest Version 0.1.dev6
 
 A lot of the code and structure is based around KivyMD https://gitlab.com/kivymd/KivyMD
 

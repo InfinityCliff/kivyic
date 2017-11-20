@@ -33,52 +33,53 @@
 # Similarly, for .pdf, Google finds pyPdf2. Again, you would need to convert it to rST or generate Kivy
 # widgets/instructions to display the document yourself.
 
-
+import io
 #!/usr/bin/env python
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.widget import Widget
 from kivy.uix.image import Image
 from kivy.uix.button import Button
-from kivy.properties import StringProperty
+from kivy.properties import StringProperty, ObjectProperty
+#from PIL import Image
+from PyPDF2 import PdfFileReader
+from wand.image import Image as wandImage
 
 class PDFReader(BoxLayout):
-    filename = StringProperty('')
+    filename = StringProperty()
+    pdf_reader = ObjectProperty()
+    page_image = ObjectProperty()
 
     def __init__(self, **kwargs):
         super(PDFReader, self).__init__(**kwargs)
-        b = Button(text='<')
-        b.size_hint = None, None
-        b.size = 100, 100
-        b.bind(on_release=self.prececent)
-        self.add_widget(b)
 
-        self.pdf = Image(source=self.filename)
+
+    def open_file(self):
+        return open(self.filename, 'rb')
+
+    def on_filename(self, *args):
+# load image from memory
+# https://mornie.org/blog/2013/11/06/how-load-image-memory-kivy/
+        self.pdf = wandImage(filename=self.filename)
+        data = io.StringIO(self.pdf)
+        self.pdf = Image(source=data)
+        #self.pdf_reader = PdfFileReader(self.open_file())
+        self.render()
+
+    def render(self):
+        print('render')
+
         self.add_widget(self.pdf)
 
-        b = Button(text='>')
-        b.size_hint = None, None
-        b.size = 100, 100
-        b.bind(on_release=self.next)
-        self.add_widget(b)
-
-    def next(self, *_):
-        self.pdf.page += 1
-
-    def prececent(self, *_):
-        self.pdf.page -= 1
-
-class MyApp(App):
+class PDFTestApp(App):
     def build(self):
-        #return PDFReader(filename='evaluation software engeener.pdf')
-        #return PDFReader(filename='MachineofDeath_FINAL_SPREADS.pdf')
         import io
         from kivy.core.image import Image as CoreImage
         file = 'rsc/test_file.pdf'
-        img = Image(source=file)
+        return PDFReader(filename=file)
+
         #data = io.BytesIO(open(file, 'rb').read())
         #im = CoreImage(data, ext='pdf', filename=file)
         #return PDFReader(filename=file)
-        return img
 if __name__ == '__main__':
-    MyApp().run()
+    PDFTestApp().run()

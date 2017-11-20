@@ -11,5 +11,5 @@ setup(
         author='Infinity Cliff',
         author_email='kevin.williams@InfinityCliff.com',
         description='Implementation of Kivy',
-        install_requires=['kivy', 'kivymd', 'apiclient', 'oauth2client']
+        install_requires=['kivy', 'kivymd', 'oauth2client']
 )

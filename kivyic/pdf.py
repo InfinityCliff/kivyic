@@ -39,9 +39,10 @@ from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.widget import Widget
 from kivy.uix.image import Image
+
 from kivy.uix.button import Button
 from kivy.properties import StringProperty, ObjectProperty
-#from PIL import Image
+#from PIL import Image as PILImage
 from PyPDF2 import PdfFileReader
 from wand.image import Image as wandImage
 
@@ -61,10 +62,12 @@ class PDFReader(BoxLayout):
 # load image from memory
 # https://mornie.org/blog/2013/11/06/how-load-image-memory-kivy/
         self.pdf = wandImage(filename=self.filename)
-        data = io.StringIO(self.pdf)
-        self.pdf = Image(source=data)
+        print(type(self.pdf))
+        #self.pdf = Image.
+        #data = io.StringIO(self.pdf)
+        #self.pdf = Image(source=data)
         #self.pdf_reader = PdfFileReader(self.open_file())
-        self.render()
+        #self.render()
 
     def render(self):
         print('render')

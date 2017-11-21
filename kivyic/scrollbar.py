@@ -11,7 +11,7 @@ from kivy.metrics import dp
 from kivy.animation import Animation
 
 from kivy.properties import StringProperty, ObjectProperty, NumericProperty, OptionProperty, ReferenceListProperty, \
-                            ListProperty
+                            ListProperty, AliasProperty, DictProperty
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
@@ -25,38 +25,11 @@ from kivy.uix.boxlayout import BoxLayout
 
 from kivy.uix.popup import Popup
 
+from kivyic import path, alphabet
 
 from functools import partial
 
-Builder.load_string('''
-
-<AlphaScrollPane>:
-    padding: '10dp'
-    
-        
-<AlphaScrollView>:
-    layout: _layout
-    GridLayout:
-        id: _layout
-        cols: 1
-        size_hint_y: None
-
-<AlphaScrollBarOverlay>:
-
-        
-<AlphaSBLabel>:
-    canvas.before:
-        Color:
-            rgba: 0,1,0,.3
-        RoundedRectangle:
-            size: self.size
-            pos: self.pos
-        Color:
-            rgba: 0,0,1,1
-        Line:
-            points: (self.x+self.height/2, self.right+self.height/2)
-            #weight: 1
-''')
+Builder.load_file(path + '/scrollbar.kv')
 
 __all__ = ['AlphaScrollView']
 
@@ -65,6 +38,7 @@ class AlphaScrollPane(RelativeLayout):
     letter = StringProperty()
     scrollview = ObjectProperty()
     slider = ObjectProperty()
+    content = ObjectProperty()
 
     def __init__(self, **kwargs):
         super(AlphaScrollPane, self).__init__(**kwargs)
@@ -73,23 +47,21 @@ class AlphaScrollPane(RelativeLayout):
 
         self.scrollview = AlphaScrollView(size_hint=(0.9, 0.95))
 
-        self.slider = Slider(min=1, max=26, value=26, orientation='vertical', step=1, size_hint=(0.1, 0.95))
+        self.slider = AlphaSlider(min=1, max=26, value=26, orientation='vertical', step=1, size_hint=(0.1, 0.95),
+                                  value_track=False)
+        self.slider.labels = alphabet
 
         self.slider.bind(value=partial(self.scroll_change, self.scrollview))
 
         self.scrollview.layout.bind(minimum_height=self.scrollview.layout.setter('height'))
 
-        for ch in range(ord('A'), ord('Z') + 1):
-            for i in range(1, 6):
-                btn = Button(text=chr(ch) + str(i), size_hint_y=None, height=60, valign='middle', font_size=12)
-                btn.text_size = (btn.size)
-                self.scrollview.layout.add_widget(btn)
         layout1.add_widget(self.scrollview)
         layout1.add_widget(self.slider)
         self.add_widget(layout1)
-        sbo = AlphaScrollBarOverlay()
-        sbo.content = ['A', 'B']
-        self.add_widget(sbo)
+
+    def on_content(self, *args):
+        self.scrollview.layout.clear_widgets()
+        self.scrollview.layout.add_widget(self.content)
 
     def on_letter(self, *args):
         self.find_letter()
@@ -114,74 +86,32 @@ class AlphaSBLabel(Label):
     pass
 
 
-class AlphaScrollBarOverlay(GridLayout):
+class AlphaSlider(Slider):
+    labels = ListProperty()
+    layout = ObjectProperty()
+    #label_height = NumericProperty()
 
-    step = NumericProperty(0)
+    def on_labels(self, *args):
+        self.layout.clear_widgets()
+        #height = self.height / len(self.labels)
+        for label in self.labels:
+            lbl = AlphaSBLabel(text=str(label))
+            #lbl.fbind('height', self.label_height)
+            #self.fbind('height', lbl.height)
+            self.layout.add_widget(lbl)
 
-    bar_width = NumericProperty('2dp')
-    '''Width of the horizontal / vertical scroll bar. The width is interpreted
-    as a height for the horizontal bar.
-
-    .. versionadded:: 0.1
-
-    :attr:`bar_width` is a :class:`~kivy.properties.NumericProperty` and
-    defaults to 2.
-    '''
-
-    bar_pos_x = OptionProperty('bottom', options=('top', 'bottom'))
-    '''Which side of the ScrollView the horizontal scroll bar should go
-    on. Possible values are 'top' and 'bottom'.
-
-    .. versionadded:: 0.1
-
-    :attr:`bar_pos_x` is an :class:`~kivy.properties.OptionProperty`,
-    defaults to 'bottom'.
-
-    '''
-
-    bar_pos_y = OptionProperty('right', options=('left', 'right'))
-    '''Which side of the ScrollView the vertical scroll bar should go
-    on. Possible values are 'left' and 'right'.
-
-    .. versionadded:: 0.1
-
-    :attr:`bar_pos_y` is an :class:`~kivy.properties.OptionProperty` and
-    defaults to 'right'.
-
-    '''
-
-    bar_pos = ReferenceListProperty(bar_pos_x, bar_pos_y)
-    '''Which side of the scroll view to place each of the bars on.
-     
-    .. versionadded:: 0.1
-
-    :attr:`bar_pos` is a :class:`~kivy.properties.ReferenceListProperty` of
-    (:attr:`bar_pos_x`, :attr:`bar_pos_y`)
-    '''
-
-    bar_margin = NumericProperty(0)
-    '''Margin between the bottom / right side of the scrollview when drawing
-    the horizontal / vertical scroll bar.
-
-    .. versionadded:: 0.1
-
-    :attr:`bar_margin` is a :class:`~kivy.properties.NumericProperty`, default
-    to 0
-    '''
-
-    content = ListProperty()
-
-    def __init__(self, **kwargs):
-        super(AlphaScrollBarOverlay, self).__init__(**kwargs)
-
-    def on_content(self, *args):
-        self.clear_widgets()
-        for c in self.content:
-            self.add_widget(AlphaSBLabel(text=str(c)))
-
+    #def on_height(self, *args):
+    #    print('updating height')
+    #    print(self.height)
+    #    self.label_height = self.height / (len(self.labels))
+    #    print(self.label_height)
 
 class AlphaScrollView(ScrollView):
     layout = ObjectProperty()
+    #scrol_view = ObjectProperty()
+
+    def add_widget(self, widget, index=0):
+        self.layout.add_widget(widget, index)
 
     def scroll_to(self, widget, padding=10, animate=True):
         if type(widget) is str:
@@ -252,7 +182,14 @@ class ScrollApp(App):
 
     def build(self):
         b = BoxLayout(padding=dp(10))
-        b.add_widget(AlphaScrollPane())
+        asp = AlphaScrollPane()
+        content = BoxLayout()
+        for letter in alphabet:
+            for i in range(1, 6):
+                btn = Button(text=letter + str(i), size_hint_y=None, height=60, valign='middle', font_size=12)
+                btn.text_size = (btn.size)
+                asp.add_widget(btn)
+        b.add_widget(asp)
         return b
 
 

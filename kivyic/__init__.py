@@ -12,6 +12,7 @@ __version__ = '0.1.dev6'
 path = os.path.dirname(__file__)
 #fonts_path = os.path.join(path, "fonts/")
 #images_path = os.path.join(path, 'images/')
+alphabet = [chr(i-1+ord('A')) for i in range(1, 27)]
 
 Logger.info("KivyIC: KivyIC version: {}".format(__version__))
 

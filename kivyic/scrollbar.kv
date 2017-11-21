@@ -1,0 +1,42 @@
+<AlphaScrollPane>:
+    padding: '10dp'
+
+
+<AlphaScrollView>:
+    layout: _layout
+    GridLayout:
+        id: _layout
+        cols: 1
+        size_hint_y: None
+
+<AlphaSlider>:
+    layout: _layout
+    #background_horizontal: ''
+    #background_vertical: ''
+    background_width: 0
+    GridLayout:
+        cols: 1
+        id: _layout
+        pos: self.parent.x, self.parent.y + self.parent.padding / 2
+        size: self.parent.width, self.parent.height - self.parent.padding
+        #canvas.after:
+        #    Color:
+        #        rgba: 1,0,0,.2
+        #    Rectangle:
+        #        pos: self.parent.x, self.parent.y + self.parent.padding / 2
+        #        size:  self.parent.width, self.parent.height - self.parent.padding
+
+<AlphaSBLabel>:
+    halign: 'center'
+    valign: 'middle'
+    #canvas.before:
+    #    Color:
+    #        rgba: 0,1,0,.2
+    #    RoundedRectangle:
+    #        size: self.size
+    #        pos: self.pos
+    #    Color:
+    #        rgba: 0,0,1,1
+    #    Line:
+    #        points: (self.x, self.y+self.height/2, self.right, self.y+self.height/2)
+            #weight: 1

@@ -10,24 +10,174 @@ from kivy.clock import Clock
 from kivy.metrics import dp
 from kivy.animation import Animation
 
-from kivy.properties import StringProperty, ObjectProperty
+from kivy.properties import StringProperty, ObjectProperty, NumericProperty, OptionProperty, ReferenceListProperty, \
+                            ListProperty
 from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.uix.textinput import TextInput
+from kivy.uix.slider import Slider
+
+from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.gridlayout import GridLayout
-from kivy.uix.textinput import TextInput
-from kivy.uix.popup import Popup
 from kivy.uix.scrollview import ScrollView
-from kivy.uix.slider import Slider
+from kivy.uix.boxlayout import BoxLayout
+
+from kivy.uix.popup import Popup
+
+
 from functools import partial
 
 Builder.load_string('''
+
+<AlphaScrollPane>:
+    padding: '10dp'
+    
+        
 <AlphaScrollView>:
     layout: _layout
     GridLayout:
         id: _layout
         cols: 1
         size_hint_y: None
+
+<AlphaScrollBarOverlay>:
+
+        
+<AlphaSBLabel>:
+    canvas.before:
+        Color:
+            rgba: 0,1,0,.3
+        RoundedRectangle:
+            size: self.size
+            pos: self.pos
+        Color:
+            rgba: 0,0,1,1
+        Line:
+            points: (self.x+self.height/2, self.right+self.height/2)
+            #weight: 1
 ''')
+
+__all__ = ['AlphaScrollView']
+
+
+class AlphaScrollPane(RelativeLayout):
+    letter = StringProperty()
+    scrollview = ObjectProperty()
+    slider = ObjectProperty()
+
+    def __init__(self, **kwargs):
+        super(AlphaScrollPane, self).__init__(**kwargs)
+
+        layout1 = StackLayout(orientation='lr-bt')
+
+        self.scrollview = AlphaScrollView(size_hint=(0.9, 0.95))
+
+        self.slider = Slider(min=1, max=26, value=26, orientation='vertical', step=1, size_hint=(0.1, 0.95))
+
+        self.slider.bind(value=partial(self.scroll_change, self.scrollview))
+
+        self.scrollview.layout.bind(minimum_height=self.scrollview.layout.setter('height'))
+
+        for ch in range(ord('A'), ord('Z') + 1):
+            for i in range(1, 6):
+                btn = Button(text=chr(ch) + str(i), size_hint_y=None, height=60, valign='middle', font_size=12)
+                btn.text_size = (btn.size)
+                self.scrollview.layout.add_widget(btn)
+        layout1.add_widget(self.scrollview)
+        layout1.add_widget(self.slider)
+        self.add_widget(layout1)
+        sbo = AlphaScrollBarOverlay()
+        sbo.content = ['A', 'B']
+        self.add_widget(sbo)
+
+    def on_letter(self, *args):
+        self.find_letter()
+
+    def find_letter(self):
+        self.scrollview.scroll_to(self.letter)
+
+    def value_to_letter(self, value):
+        self.letter = chr(abs(value - 26) + ord('A'))
+
+    def scroll_change(self, scrlv, slider, value):
+        self.value_to_letter(value)
+        scrlv.scroll_y = slider.value_normalized
+
+    def slider_change(self, s, instance, value):
+        if value >= 0:
+            #this to avoid 'maximum recursion depth exceeded' error
+            s.value = value
+
+
+class AlphaSBLabel(Label):
+    pass
+
+
+class AlphaScrollBarOverlay(GridLayout):
+
+    step = NumericProperty(0)
+
+    bar_width = NumericProperty('2dp')
+    '''Width of the horizontal / vertical scroll bar. The width is interpreted
+    as a height for the horizontal bar.
+
+    .. versionadded:: 0.1
+
+    :attr:`bar_width` is a :class:`~kivy.properties.NumericProperty` and
+    defaults to 2.
+    '''
+
+    bar_pos_x = OptionProperty('bottom', options=('top', 'bottom'))
+    '''Which side of the ScrollView the horizontal scroll bar should go
+    on. Possible values are 'top' and 'bottom'.
+
+    .. versionadded:: 0.1
+
+    :attr:`bar_pos_x` is an :class:`~kivy.properties.OptionProperty`,
+    defaults to 'bottom'.
+
+    '''
+
+    bar_pos_y = OptionProperty('right', options=('left', 'right'))
+    '''Which side of the ScrollView the vertical scroll bar should go
+    on. Possible values are 'left' and 'right'.
+
+    .. versionadded:: 0.1
+
+    :attr:`bar_pos_y` is an :class:`~kivy.properties.OptionProperty` and
+    defaults to 'right'.
+
+    '''
+
+    bar_pos = ReferenceListProperty(bar_pos_x, bar_pos_y)
+    '''Which side of the scroll view to place each of the bars on.
+     
+    .. versionadded:: 0.1
+
+    :attr:`bar_pos` is a :class:`~kivy.properties.ReferenceListProperty` of
+    (:attr:`bar_pos_x`, :attr:`bar_pos_y`)
+    '''
+
+    bar_margin = NumericProperty(0)
+    '''Margin between the bottom / right side of the scrollview when drawing
+    the horizontal / vertical scroll bar.
+
+    .. versionadded:: 0.1
+
+    :attr:`bar_margin` is a :class:`~kivy.properties.NumericProperty`, default
+    to 0
+    '''
+
+    content = ListProperty()
+
+    def __init__(self, **kwargs):
+        super(AlphaScrollBarOverlay, self).__init__(**kwargs)
+
+    def on_content(self, *args):
+        self.clear_widgets()
+        for c in self.content:
+            self.add_widget(AlphaSBLabel(text=str(c)))
 
 
 class AlphaScrollView(ScrollView):
@@ -100,63 +250,11 @@ class AlphaScrollView(ScrollView):
 
 class ScrollApp(App):
 
-    letter = StringProperty()
-    scrollview = ObjectProperty()
-    slider = ObjectProperty()
-
     def build(self):
-        popup = Popup(title='Draggable Scrollbar', size_hint=(0.8,1), auto_dismiss=False)
+        b = BoxLayout(padding=dp(10))
+        b.add_widget(AlphaScrollPane())
+        return b
 
-        #this layout is the child widget for the main popup
-        layout1 = StackLayout(orientation='lr-bt')
-
-        #this button is a child of layout1
-        closebutton = Button(text='close', size_hint=(0.9,0.05))
-        closebutton.bind(on_press=popup.dismiss)
-
-        #another child of layout1 and this is the scrollview which will have a custom draggable scrollbar
-        self.scrollview = AlphaScrollView(size_hint=(0.9,0.95))
-
-        #the last child of layout1 and this will act as the draggable scrollbar
-        self.slider = Slider(min=1, max=26, value=26, orientation='vertical', step=1, size_hint=(0.1, 0.95))
-
-        #scrlv.bind(scroll_y=partial(self.slider_change, s))
-
-        #what this does is, whenever the slider is dragged, it scrolls the previously added scrollview by the same amount the slider is dragged
-        self.slider.bind(value=partial(self.scroll_change, self.scrollview))
-
-        #layout2 = GridLayout(id='layout', cols=1, size_hint_y=None)
-        self.scrollview.layout.bind(minimum_height=self.scrollview.layout.setter('height'))
-
-        for ch in range(ord('A'), ord('Z') + 1):
-            for i in range(1, 6):
-                btn = Button(text=chr(ch) + str(i), size_hint_y=None, height=60, valign='middle', font_size=12)
-                btn.text_size = (btn.size)
-                self.scrollview.layout.add_widget(btn)
-        #self.scrollview.add_widget(self.scrollview.layout)
-        layout1.add_widget(closebutton)
-        layout1.add_widget(self.scrollview)
-        layout1.add_widget(self.slider)
-        popup.content = layout1
-        popup.open()
-
-    def on_letter(self, *args):
-        self.find_letter()
-
-    def find_letter(self):
-        self.scrollview.scroll_to(self.letter)
-
-    def value_to_letter(self, value):
-        self.letter = chr(abs(value - 26) + ord('A'))
-
-    def scroll_change(self, scrlv, slider, value):
-        self.value_to_letter(value)
-        scrlv.scroll_y = slider.value_normalized
-
-    def slider_change(self, s, instance, value):
-        if value >= 0:
-            #this to avoid 'maximum recursion depth exceeded' error
-            s.value=value
 
 if __name__ == '__main__':
     ScrollApp().run()

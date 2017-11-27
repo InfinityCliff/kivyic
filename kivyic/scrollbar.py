@@ -3,9 +3,10 @@
 
 #!python
 import kivy
-kivy.require('1.10.0')
+
 from kivy.app import App
-from kivy.lang.builder import Builder
+#from kivy.lang.builder import Builder
+from kivy.lang import Builder
 from kivy.clock import Clock
 from kivy.metrics import dp
 from kivy.animation import Animation

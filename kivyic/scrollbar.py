@@ -40,6 +40,7 @@ class AlphaScrollPane(RelativeLayout):
     scrollview = ObjectProperty()
     slider = ObjectProperty()
     content = ObjectProperty()
+    _container = ObjectProperty()
 
     def __init__(self, **kwargs):
         super(AlphaScrollPane, self).__init__(**kwargs)
@@ -60,9 +61,22 @@ class AlphaScrollPane(RelativeLayout):
         layout1.add_widget(self.slider)
         self.add_widget(layout1)
 
-    def on_content(self, *args):
-        self.scrollview.layout.clear_widgets()
-        self.scrollview.layout.add_widget(self.content)
+    def on_content(self, instance, value):
+        print('on_content')
+        print(self._container)
+        print(self.content)
+        #self._container.add_widget(value)
+        if self._container:
+            print('on_content_if')
+            self._container.clear_widgets()
+            self._container.add_widget(value)
+
+    def on__container(self, instance, value):
+        print('on__container')
+        if value is None or self.content is None:
+            return
+        self._container.clear_widgets()
+        self._container.add_widget(self.content)
 
     def on_letter(self, *args):
         self.find_letter()
@@ -107,12 +121,18 @@ class AlphaSlider(Slider):
     #    self.label_height = self.height / (len(self.labels))
     #    print(self.label_height)
 
+
+class AlphaScrollViewException(Exception):
+    """
+    AlphaScrollView exception, fired when multiple content widgets are added to the
+    popup.
+
+    .. versionadded:: 0.1
+    """
+
+
 class AlphaScrollView(ScrollView):
     layout = ObjectProperty()
-    #scrol_view = ObjectProperty()
-
-    def add_widget(self, widget, index=0):
-        self.layout.add_widget(widget, index)
 
     def scroll_to(self, widget, padding=10, animate=True):
         if type(widget) is str:
@@ -183,13 +203,14 @@ class ScrollApp(App):
 
     def build(self):
         b = BoxLayout(padding=dp(10))
-        asp = AlphaScrollPane()
         content = BoxLayout()
         for letter in alphabet:
             for i in range(1, 6):
                 btn = Button(text=letter + str(i), size_hint_y=None, height=60, valign='middle', font_size=12)
-                btn.text_size = (btn.size)
-                asp.add_widget(btn)
+                btn.text_size = btn.size
+                content.add_widget(btn)
+        asp = AlphaScrollPane(content=content)
+        #asp.content = content
         b.add_widget(asp)
         return b
 

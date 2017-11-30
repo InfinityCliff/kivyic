@@ -91,6 +91,9 @@ class AlphaSlider(Slider):
     layout = ObjectProperty()
     #label_height = NumericProperty()
 
+    def __init__(self, **kwargs):
+        super(AlphaSlider, self).__init__(**kwargs)
+
     def on_labels(self, *args):
         self.layout.clear_widgets()
         #height = self.height / len(self.labels)
@@ -199,7 +202,7 @@ class AlphaScrollView(ScrollView):
 class ScrollApp(App):
 
     def build(self):
-        b = BoxLayout(padding=dp(10))
+        b = BoxLayout() # padding=[dp(11)])
         content = GridLayout(cols=1)
         for letter in alphabet:
             for i in range(1, 6):
@@ -207,6 +210,7 @@ class ScrollApp(App):
                 btn.text_size = btn.size
                 content.add_widget(btn)
         asp = AlphaScrollPane(content=content)
+        #asp = AlphaScrollPane()
         #asp.content = content
         b.add_widget(asp)
         return b

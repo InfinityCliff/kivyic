@@ -40,14 +40,16 @@ class AlphaScrollPane(RelativeLayout):
     scrollview = ObjectProperty()
     slider = ObjectProperty()
     content = ObjectProperty()
-    _container = ObjectProperty()
+    container = ObjectProperty()
 
     def __init__(self, **kwargs):
         super(AlphaScrollPane, self).__init__(**kwargs)
 
-        layout1 = StackLayout(orientation='lr-bt')
+        #layout1 = StackLayout(orientation='lr-bt')
+        self.container = StackLayout(orientation='lr-bt')
 
-        self.scrollview = AlphaScrollView(size_hint=(0.9, 0.95))
+        self.scrollview = AlphaScrollView(size_hint=(0.9, 0.95),
+                                          content=self.content)
 
         self.slider = AlphaSlider(min=1, max=26, value=26, orientation='vertical', step=1, size_hint=(0.1, 0.95),
                                   value_track=False)
@@ -55,28 +57,11 @@ class AlphaScrollPane(RelativeLayout):
 
         self.slider.bind(value=partial(self.scroll_change, self.scrollview))
 
-        self.scrollview.layout.bind(minimum_height=self.scrollview.layout.setter('height'))
+        self.scrollview._container.bind(minimum_height=self.scrollview._container.setter('height'))
 
-        layout1.add_widget(self.scrollview)
-        layout1.add_widget(self.slider)
-        self.add_widget(layout1)
-
-    def on_content(self, instance, value):
-        print('on_content')
-        print(self._container)
-        print(self.content)
-        #self._container.add_widget(value)
-        if self._container:
-            print('on_content_if')
-            self._container.clear_widgets()
-            self._container.add_widget(value)
-
-    def on__container(self, instance, value):
-        print('on__container')
-        if value is None or self.content is None:
-            return
-        self._container.clear_widgets()
-        self._container.add_widget(self.content)
+        self.container.add_widget(self.scrollview)
+        self.container.add_widget(self.slider)
+        self.add_widget(self.container)
 
     def on_letter(self, *args):
         self.find_letter()
@@ -132,7 +117,19 @@ class AlphaScrollViewException(Exception):
 
 
 class AlphaScrollView(ScrollView):
-    layout = ObjectProperty()
+    content = ObjectProperty()
+    _container = ObjectProperty()
+
+    def on_content(self, instance, value):
+        if self._container:
+            self._container.clear_widgets()
+            self._container.add_widget(value)
+
+    def on__container(self, instance, value):
+        if value is None or self.content is None:
+            return
+        self._container.clear_widgets()
+        self._container.add_widget(self.content)
 
     def scroll_to(self, widget, padding=10, animate=True):
         if type(widget) is str:
@@ -141,7 +138,7 @@ class AlphaScrollView(ScrollView):
             super().scroll_to(widget, padding=10, animate=True)
 
     def scroll_to_letter(self, letter, padding=10, animate=True):
-        for child in reversed(self.layout.children):
+        for child in reversed(self._container.children):
             if child.text[0] == letter:
                 self._scroll_to_letter(child, padding=10, animate=True)
                 break
@@ -153,7 +150,7 @@ class AlphaScrollView(ScrollView):
         Otherwise, it should be a dict containing arguments to pass to
         :class:`~kivy.animation.Animation` constructor.
 
-        .. versionadded:: 1.9.1
+        .. versionadded:: 0.1
         '''
         if not self.parent:
             return
@@ -203,7 +200,7 @@ class ScrollApp(App):
 
     def build(self):
         b = BoxLayout(padding=dp(10))
-        content = BoxLayout()
+        content = GridLayout(cols=1)
         for letter in alphabet:
             for i in range(1, 6):
                 btn = Button(text=letter + str(i), size_hint_y=None, height=60, valign='middle', font_size=12)

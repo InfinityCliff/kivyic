@@ -1,15 +1,15 @@
 <AlphaScrollPane>:
     padding: '10dp'
-    _container: _layout
-    GridLayout:
-        id: _layout
-        cols: 1
-        size_hint_y: None
+    #_container: container
+    #GridLayout:
+    #    id: container
+    #    cols: 1
+    #    size_hint_y: None
 
 <AlphaScrollView>:
-    layout: _layout
+    _container: container
     GridLayout:
-        id: _layout
+        id: container
         cols: 1
         size_hint_y: None
 

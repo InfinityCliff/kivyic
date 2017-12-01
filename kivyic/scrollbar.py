@@ -46,13 +46,15 @@ class AlphaScrollPane(RelativeLayout):
     content = ObjectProperty() # passed on to scrollview
     container = ObjectProperty()
     _container = ObjectProperty()
+    view_class = StringProperty()
 
     def __init__(self, **kwargs):
         super(AlphaScrollPane, self).__init__(**kwargs)
 
         self.container = StackLayout(orientation='lr-bt')
 
-        self.scrollview = AlphaScrollView(size_hint=(0.9, 0.95), content=self.content)
+        self.scrollview = AlphaScrollView(size_hint=(0.9, 0.95), content=self.content,
+                                          view_class=self.view_class)
         self.scrollview._container.bind(minimum_height=self.scrollview._container.setter('height'))
 
         self.slider = AlphaSlider(min=1, max=26, value=26, orientation='vertical', step=1, size_hint=(0.1, 0.95), value_track=False)
@@ -63,15 +65,17 @@ class AlphaScrollPane(RelativeLayout):
         self.container.add_widget(self.slider)
         #self.add_widget(self.container)
 
-    def add_widget(self, widget, index=0, canvas=None):
-        if self._container:
-            print('container exists')
-            return
-        super().add_widget(widget, index)
+    #def on_view_class(self, obj, value):
+
+        #print(obj)
+        #print(value.title())
+        #mod = kivy.uix.button
+        #class_ = getattr(mod, value.title())
+        #view = class_()
+        #print(view)
 
     def on_container(self, instance, value):
         if self._container:
-            print('_container exists')
             return
         else:
             self.add_widget(self.container)
@@ -79,6 +83,11 @@ class AlphaScrollPane(RelativeLayout):
 
     def on_letter(self, *args):
         self.find_letter()
+
+    def add_widget(self, widget, index=0, canvas=None):
+        if self._container:
+            return
+        super().add_widget(widget, index)
 
     def find_letter(self):
         self.scrollview.scroll_to(self.letter)
@@ -146,11 +155,12 @@ class AlphaScrollItem(Widget):
         return (widget for widget in self.widget_list)
 
     def on_view_class(self, obj, value):
-        print(obj)
+        print(':', obj)
         print(value)
-        mod = __import__('kivy.uix.button')
-        class_ = getattr(mod, value)
+        mod = kivy.uix.button
+        class_ = getattr(mod, value.title())
         self.view = class_()
+        print(self.view)
 
 
 class AlphaScrollButtons(AlphaScrollItem):
@@ -161,6 +171,10 @@ class AlphaScrollButtons(AlphaScrollItem):
 class AlphaScrollView(ScrollView):
     content = ListProperty()
     _container = ObjectProperty()
+    view_class = StringProperty()
+
+    def __init__(self, **kwargs):
+        super(AlphaScrollView, self).__init__(**kwargs)
 
     def on_content(self, instance, value):
         if self._container:
@@ -177,6 +191,10 @@ class AlphaScrollView(ScrollView):
     def add_content(self, widget_list):
         for widget in widget_list:
             self._container.add_widget(widget)
+
+    def on_view_class(self, obj, value):
+        print('2')
+        if self._container:
 
 
     def scroll_to(self, widget, padding=10, animate=True):
@@ -254,7 +272,7 @@ class ScrollApp(App):
                 btn = Button(text=letter + str(i), size_hint_y=None, height=60, valign='middle', font_size=12)
                 content.add_widget(btn)
         content.add_widget(Button(text='A9', size_hint_y=None, height=60, valign='middle', font_size=12))
-        asp = AlphaScrollPane(content=content)
+        asp = AlphaScrollPane(content=content, view_class='button')
 
         asp.add_widget(Button(text='A6'))
         asp.add_widget(Button(text='A10'))

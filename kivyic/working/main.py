@@ -2,54 +2,40 @@ from kivy.app import App
 from kivy.lang import Builder
 from kivy.properties import StringProperty
 from kivy.uix.button import Button
+from kivy.uix.label import Label
 from kivy.uix.modalview import ModalView
 from kivymd.dialog import MDDialog
 from kivymd.theming import ThemeManager
+from kivy.uix.gridlayout import GridLayout
 
-from kivyic.dialog import ICDialog, FileExplorerDialog
-from kivyic.fileexplorer import FileExplorer
-from kivyic.working.my_classes import ModalViewContent
+class DynamicWidget(object):
+    @classmethod
+    def spawn(cls, name, **attributes):
+        new_class = type(name, (cls,), attributes)
+        globals()[name] = new_class
+        return new_class(name)
 
-main_kv = '''
-GridLayout:
-    Button:
-        size_hint: None, None
-        size: 100, 20
-        text: 'modal view'
-        on_release: app.open_file_dialog()
-'''
+    def __init__(self, name, text):
+        self.name = name
+        self.text = text
+t = Label
+dclass = type("dc", (t,),{})
+dlabel = dclass(text='2', size_hint_y=None, height=60, valign='middle', font_size=12)
 
+t = Button
+dbutton = dclass(text='3', size_hint_y=None, height=60, valign='middle', font_size=12)
 
 class TestApp2(App):
     theme_cls = ThemeManager()
     filename = StringProperty()
+
     def build(self):
-        main_widget = Builder.load_string(main_kv)
-        #but = Button(text='modal view')
-        #but.bind(on_release=self.open_file_dialog)
-        #main_widget.add_widget(but)
-        return main_widget
-
-    def open_file_dialog(self):
-        mv = FileExplorerDialog(size_hint=(.8, .8), title='File Explorer',
-                                content_fit='window')
-
-        mv.bind(file_name=self.setter('filename'))
-        mv.open()
-
-    def on_filename(self, instance, value):
-        print(self.filename)
-
-    def open_file_dialog2(self):
-        mvc = FileExplorer()
-        mv = ICDialog(size_hint=(.8, .8), content=mvc, title='File Explorer',
-                      content_fit='window')
-        mv.add_action_button("Import",
-                             action=lambda *x: mvc.ok())
-        mv.add_action_button("Dismiss",
-                             action=lambda *x: mv.dismiss())
-        mv.open()
-
+        g = GridLayout(cols=1)
+        #s = DynamicWidget.spawn('2', text='2t')
+        g.add_widget(Button(text='1', size_hint_y=None, height=60, valign='middle', font_size=12))
+        g.add_widget(dlabel)
+        g.add_widget(dbutton)
+        return g
 
 
 if __name__ == '__main__':

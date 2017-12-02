@@ -48,15 +48,18 @@ class AlphaScrollPane(RelativeLayout):
     content = ListProperty() # passed on to scrollview
     container = ObjectProperty()
     _container = ObjectProperty()
-    view_class = StringProperty()
 
-    def __init__(self, **kwargs):
+    _view_class = None
+
+    def __init__(self, view_class, **kwargs):
         super(AlphaScrollPane, self).__init__(**kwargs)
+
+        self.view_class = view_class
 
         self.container = StackLayout(orientation='lr-bt')
 
-        self.scrollview = AlphaScrollView(size_hint=(0.9, 0.95), content=self.content)#,
-                                          #view_class=self.view_class)
+        self.scrollview = AlphaScrollView(size_hint=(0.9, 0.95), content=self.content,
+                                          view_class=self.view_class)
         self.scrollview._container.bind(minimum_height=self.scrollview._container.setter('height'))
 
         self.slider = AlphaSlider(min=1, max=26, value=26, orientation='vertical', step=1, size_hint=(0.1, 0.95), value_track=False)
@@ -67,6 +70,13 @@ class AlphaScrollPane(RelativeLayout):
         self.container.add_widget(self.slider)
         #self.add_widget(self.container)
 
+    @property
+    def view_class(self):
+        return self._view_class
+
+    @view_class.setter
+    def view_class(self, value):
+        self._view_class = value
 
     def on_container(self, instance, value):
         if self._container:
@@ -125,36 +135,50 @@ class AlphaScrollViewException(Exception):
     .. versionadded:: 0.1
     """
 
+
 class AlphaScrollItem(BoxLayout):
-    view_class = ObjectProperty()
     view_item = ObjectProperty()
     data = DictProperty()
-
-    def __init__(self, **kwargs):
-        super(AlphaScrollItem, self).__init__(**kwargs)
-
-    def __str__(self):
-        return str(self.view_item)
+    _data = DictProperty()
 
     def on_data(self, obj, value):
-        print(value)
-        for attr, val in value.items():
-            setattr(self.view_class, attr, val)
+        if self._data:
+            self.add_data(value)
 
-    def on_view_class(self, obj, value):
-        print('2', obj)
-        print(self.view_class)
-        self.view_item = self.view_class()
-        self.add_widget(self.view_item)
+    def on__data(self, obj, value):
+        if value is None or self.data is None:
+            return
+        self.add_data(self.data)
+
+    def add_data(self, data):
+        for attr, val in data.items():
+            setattr(self.view_item, attr, val)
+
+
+class AlphaScrollItemButton(AlphaScrollItem):
+    text = StringProperty()
+
+
+class AlphaScrollItemLabel(AlphaScrollItem):
+    text = StringProperty()
 
 
 class AlphaScrollView(ScrollView):
     content = ListProperty()
     _container = ObjectProperty()
-    view_class = Button
+    _view_class = None
 
-    def __init__(self, **kwargs):
+    def __init__(self, view_class, **kwargs):
+        self.view_class = view_class
         super(AlphaScrollView, self).__init__(**kwargs)
+
+    @property
+    def view_class(self):
+        return self._view_class
+
+    @view_class.setter
+    def view_class(self, value):
+        self._view_class = value
 
     def on_content(self, instance, value):
         if self._container:
@@ -162,25 +186,14 @@ class AlphaScrollView(ScrollView):
             self.add_content(value)
 
     def on__container(self, instance, value):
-        if value is None or self.content is None:
+        if value is None or self.content is None or self._view_class is None:
             return
         self._container.clear_widgets()
         self.add_content(self.content)
-        #self._container.add_widget(self.content)
 
-    def on_view_class(self, obj, value):
-        print('1', obj)
-        #self.view = AlphaScrollItem(view_class=value)
-
-# WORKING HERE
-    def add_content(self, item_list): #widget_list):
+    def add_content(self, item_list):
         for item in item_list:
-            print(item)
-            data={'text': item, 'size_hint_y': None, 'height': 60, 'valign': 'middle', 'font_size': 12}
-            c = AlphaScrollItem()
-            c.view_class = Button
-            c.data = data
-            self._container.add_widget(c)
+            self._container.add_widget(self.view_class(text=item))
 
     def scroll_to(self, widget, padding=10, animate=True):
         if type(widget) is str:
@@ -254,11 +267,8 @@ class ScrollApp(App):
         content = [] #AlphaScrollButtons()
         for letter in alphabet:
             for i in range(1, 6):
-                #btn = Button(text=letter + str(i), size_hint_y=None, height=60, valign='middle', font_size=12)
                 content.append(letter + str(i))
-                #content.add_widget(btn)
-        #content.add_widget(Button(text='A9', size_hint_y=None, height=60, valign='middle', font_size=12))
-        asp = AlphaScrollPane(content=content) #, view_class='Button')
+        asp = AlphaScrollPane(content=content, view_class=AlphaScrollItemButton)
 
         #asp.add_widget(Button(text='A6'))
         #asp.add_widget(Button(text='A10'))

@@ -1,10 +1,32 @@
+
+<AlphaScrollItemButton>:
+    view_item: _view_item
+    size_hint_y: None
+    height: self.minimum_height
+    Button:
+        id: _view_item
+        text: root.text
+        size_hint_y: None
+        height: 60
+        valign: 'middle'
+        font_size: 12
+
+<AlphaScrollItemLabel>:
+    view_item: _view_item
+    size_hint_y: None
+    height: self.minimum_height
+    Label:
+        id: _view_item
+        text: root.text
+        size_hint_y: None
+        height: 60
+        valign: 'middle'
+        font_size: 12
+
+
 <AlphaScrollPane>:
     padding: '10dp'
-    #_container: container
-    #GridLayout:
-    #    id: container
-    #    cols: 1
-    #    size_hint_y: None
+
 
 <AlphaScrollView>:
     _container: container
@@ -15,8 +37,6 @@
 
 <AlphaSlider>:
     layout: _layout
-    #background_horizontal: ''
-    #background_vertical: ''
     background_width: 0
     GridLayout:
         cols: 1

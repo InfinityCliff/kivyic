@@ -1,5 +1,17 @@
 
-<AlphaScrollItemButton>:
+<AlphaScrollItemLabel>:
+    view_item: _view_item
+    size_hint_y: None
+    height: self.minimum_height
+    Label:
+        id: _view_item
+        text: root.text
+        size_hint_y: None
+        height: 60
+        valign: 'middle'
+        font_size: 12
+
+<-AlphaScrollItemButton>:
     view_item: _view_item
     size_hint_y: None
     height: self.minimum_height
@@ -8,6 +20,18 @@
         text: root.text
         size_hint_y: None
         height: 60
+        valign: 'middle'
+        font_size: 12
+
+<-AlphaScrollViewSeparators>:
+    view_item: _view_item
+    size_hint_y: None
+    height: self.minimum_height
+    Label:
+        id: _view_item
+        text: root.text
+        size_hint_y: None
+        height: 20
         valign: 'middle'
         font_size: 12
 

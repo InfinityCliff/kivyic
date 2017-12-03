@@ -140,33 +140,56 @@ class AlphaScrollItem(BoxLayout):
     view_item = ObjectProperty()
     data = DictProperty()
     _data = DictProperty()
+    sort_key = None
+
+    def __init__(self, **kwargs):
+        for attr, val in kwargs.items():
+            setattr(self, attr, val)
+        print(self.data)  #WORKING HERE - data is getting set, but not calling on_data
+        #self.data = kwargs['data']
+        #print(self.data)
+        super(AlphaScrollItem, self).__init__(**kwargs)
 
     def on_data(self, obj, value):
-        if self._data:
-            self.add_data(value)
+        print('on_data')
+        for attr, val in self.data.items():
+            setattr(self, attr, val)
+    #    if self._data:
+    #        self.add_data(value)
 
-    def on__data(self, obj, value):
-        if value is None or self.data is None:
-            return
-        self.add_data(self.data)
+    #def on__data(self, obj, value):
+    #    if value is None or self.data is None:
+    #        return
+    #    self.add_data(self.data)
 
-    def add_data(self, data):
-        for attr, val in data.items():
-            setattr(self.view_item, attr, val)
-
-
-class AlphaScrollItemButton(AlphaScrollItem):
-    text = StringProperty()
+    #def add_data(self, data):
+    #    print(data)
 
 
 class AlphaScrollItemLabel(AlphaScrollItem):
     text = StringProperty()
+    sort_key = StringProperty()
+
+    def __init__(self, **kwargs):
+
+        super(AlphaScrollItemLabel, self).__init__(**kwargs)
+        self.bind(sort_key=lambda x: self.text)
+
+
+class AlphaScrollItemButton(AlphaScrollItemLabel):
+    pass
+
+
+class AlphaScrollViewSeparators(AlphaScrollItemLabel):
+    pass
 
 
 class AlphaScrollView(ScrollView):
     content = ListProperty()
     _container = ObjectProperty()
     _view_class = None
+    sort_key = None
+    separators = ListProperty()
 
     def __init__(self, view_class, **kwargs):
         self.view_class = view_class
@@ -193,7 +216,10 @@ class AlphaScrollView(ScrollView):
 
     def add_content(self, item_list):
         for item in item_list:
-            self._container.add_widget(self.view_class(text=item))
+            # WORKING HERE  to get data to set respective variables
+            data = {'text': item}
+            self._container.add_widget(self.view_class(data=data))
+            #self._container.add_widget(self.view_class(text=item))
 
     def scroll_to(self, widget, padding=10, animate=True):
         if type(widget) is str:
@@ -239,7 +265,6 @@ class AlphaScrollView(ScrollView):
             dy = self.top - pos[1] - widget.height - dp(padding[1])
         else:
             dy = self.top - cor[1] - dp(padding[1])
-
 
         if pos[0] < self.x:
             dx = self.x - pos[0] + dp(padding[0])

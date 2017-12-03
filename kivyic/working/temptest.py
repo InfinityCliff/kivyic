@@ -44,7 +44,7 @@ class TemplateClass(ThemableBehavior, BoxLayout):
     """
 
     """
-    pass
+    sort_key = None
 
 
 class TemplateApp(App):
@@ -54,7 +54,13 @@ class TemplateApp(App):
     theme_cls = ThemeManager()
 
     def build(self):
-        return TemplateClass()
+        tc = TemplateClass()
+        b = Button()
+        tc.add_widget(b)
+        tc.sort_key = 'text'
+        b['text'] = 'sort key'
+        b.get()
+        return tc
 
 
 if __name__ == '__main__':

@@ -41,72 +41,6 @@ Builder.load_file(path + '/scrollbar.kv')
 __all__ = ['AlphaScrollView']
 
 
-class AlphaScrollPane(RelativeLayout):
-    letter = StringProperty()
-    scrollview = ObjectProperty()
-    slider = ObjectProperty()
-    content = ListProperty() # passed on to scrollview
-    container = ObjectProperty()
-    _container = ObjectProperty()
-
-    _view_class = None
-
-    def __init__(self, view_class, **kwargs):
-        super(AlphaScrollPane, self).__init__(**kwargs)
-
-        self.view_class = view_class
-
-        self.container = StackLayout(orientation='lr-bt')
-
-        self.scrollview = AlphaScrollView(size_hint=(0.9, 0.95), content=self.content,
-                                          view_class=self.view_class)
-        self.scrollview._container.bind(minimum_height=self.scrollview._container.setter('height'))
-
-        self.slider = AlphaSlider(min=1, max=26, value=26, orientation='vertical', step=1, size_hint=(0.1, 0.95), value_track=False)
-        self.slider.labels = alphabet
-        self.slider.bind(value=partial(self.scroll_change, self.scrollview))
-
-        self.container.add_widget(self.scrollview)
-        self.container.add_widget(self.slider)
-        #self.add_widget(self.container)
-
-    @property
-    def view_class(self):
-        return self._view_class
-
-    @view_class.setter
-    def view_class(self, value):
-        self._view_class = value
-
-    def on_container(self, instance, value):
-        if self._container:
-            return
-        else:
-            self.add_widget(self.container)
-            self._container = self.container
-
-    def on_letter(self, *args):
-        self.find_letter()
-
-    def add_widget(self, widget, index=0, canvas=None):
-        if self._container:
-            return
-        super().add_widget(widget, index)
-
-    def find_letter(self):
-        self.scrollview.scroll_to(self.letter)
-
-    def value_to_letter(self, value):
-        self.letter = chr(abs(value - 26) + ord('A'))
-
-    def scroll_change(self, scrlv, slider, value):
-        self.value_to_letter(value)
-        scrlv.scroll_y = slider.value_normalized
-
-    def slider_change(self, s, instance, value):
-        if value >= 0:
-            #this to avoid 'maximum recursion depth exceeded' error
-            s.value = value
 
 
 class AlphaSBLabel(Label):
@@ -139,41 +73,15 @@ class AlphaScrollViewException(Exception):
 class AlphaScrollItem(BoxLayout):
     view_item = ObjectProperty()
     data = DictProperty()
-    _data = DictProperty()
     sort_key = None
 
-    def __init__(self, **kwargs):
-        for attr, val in kwargs.items():
-            setattr(self, attr, val)
-        print(self.data)  #WORKING HERE - data is getting set, but not calling on_data
-        #self.data = kwargs['data']
-        #print(self.data)
-        super(AlphaScrollItem, self).__init__(**kwargs)
-
     def on_data(self, obj, value):
-        print('on_data')
         for attr, val in self.data.items():
             setattr(self, attr, val)
-    #    if self._data:
-    #        self.add_data(value)
-
-    #def on__data(self, obj, value):
-    #    if value is None or self.data is None:
-    #        return
-    #    self.add_data(self.data)
-
-    #def add_data(self, data):
-    #    print(data)
 
 
 class AlphaScrollItemLabel(AlphaScrollItem):
     text = StringProperty()
-    sort_key = StringProperty()
-
-    def __init__(self, **kwargs):
-
-        super(AlphaScrollItemLabel, self).__init__(**kwargs)
-        self.bind(sort_key=lambda x: self.text)
 
 
 class AlphaScrollItemButton(AlphaScrollItemLabel):
@@ -185,14 +93,14 @@ class AlphaScrollViewSeparators(AlphaScrollItemLabel):
 
 
 class AlphaScrollView(ScrollView):
-    content = ListProperty()
+    content = DictProperty()
     _container = ObjectProperty()
     _view_class = None
     sort_key = None
     separators = ListProperty()
 
-    def __init__(self, view_class, **kwargs):
-        self.view_class = view_class
+    def __init__(self, **kwargs):
+        self.view_class = kwargs.pop('view_class')
         super(AlphaScrollView, self).__init__(**kwargs)
 
     @property
@@ -204,22 +112,40 @@ class AlphaScrollView(ScrollView):
         self._view_class = value
 
     def on_content(self, instance, value):
-        if self._container:
-            self._container.clear_widgets()
-            self.add_content(value)
+        if self._container and not self.sorting:
+            self.sort_key = value['sort_key']
+            self.refresh_view()
 
     def on__container(self, instance, value):
         if value is None or self.content is None or self._view_class is None:
             return
-        self._container.clear_widgets()
-        self.add_content(self.content)
+        self.sort_key = self.content['sort_key']
+        self.refresh_view()
 
-    def add_content(self, item_list):
-        for item in item_list:
-            # WORKING HERE  to get data to set respective variables
-            data = {'text': item}
+    def refresh_view(self):
+        self._container.clear_widgets()
+        for data in self.content['data']:
+            if data[self.sort_key][0] not in self.separators:
+                self.content['data'] = self.add_seperator(data[self.sort_key][0], self.content['data'])
+
             self._container.add_widget(self.view_class(data=data))
-            #self._container.add_widget(self.view_class(text=item))
+        self.sorting = False
+
+    def add_item(self, data_dict):
+        new_content = self.content
+        data_list = self.content['data']
+        data_list.append(data_dict)
+        if data_dict[self.sort_key][0] not in self.separators:
+            data_list = self.add_seperator(data_dict[self.sort_key][0], data_list)
+        new_content['data'] = sorted(data_list, key=lambda k: k[self.sort_key])
+        self.content = new_content # should trigger on_content
+
+# WORKING HERE - need to specify view_class for seperators, may need to be in data list
+    def add_seperator(self, sep, data_list):
+        data_list.append({'text': sep})
+        self.separators.append(sep)
+        return data_list
+
 
     def scroll_to(self, widget, padding=10, animate=True):
         if type(widget) is str:
@@ -285,18 +211,87 @@ class AlphaScrollView(ScrollView):
             self.scroll_y = syp
 
 
+class AlphaScrollPane(RelativeLayout):
+    letter = StringProperty()
+    scrollview = ObjectProperty()
+    slider = ObjectProperty()
+    content = DictProperty()  # passed on to scrollview
+    container = ObjectProperty()
+    _container = ObjectProperty()
+    _view_class = None
+
+    def __init__(self, **kwargs):
+        self.view_class = kwargs.pop('view_class')
+        super(AlphaScrollPane, self).__init__(**kwargs)
+
+        self.container = StackLayout(orientation='lr-bt')
+
+        self.scrollview = AlphaScrollView(size_hint=(0.9, 0.95), content=self.content,
+                                          view_class=self.view_class)
+        self.scrollview._container.bind(minimum_height=self.scrollview._container.setter('height'))
+
+        self.slider = AlphaSlider(min=1, max=26, value=26, orientation='vertical', step=1, size_hint=(0.1, 0.95), value_track=False)
+        self.slider.labels = alphabet
+        self.slider.bind(value=partial(self.scroll_change, self.scrollview))
+
+        self.container.add_widget(self.scrollview)
+        self.container.add_widget(self.slider)
+
+    @property
+    def view_class(self):
+        return self._view_class
+
+    @view_class.setter
+    def view_class(self, value):
+        self._view_class = value
+
+    def on_container(self, instance, value):
+        if self._container:
+            return
+        else:
+            self.add_widget(self.container)
+            self._container = self.container
+
+    def on_letter(self, *args):
+        self.find_letter()
+
+    def add_widget(self, widget, index=0, canvas=None):
+        if self._container:
+            return
+        super().add_widget(widget, index)
+
+    def add_item(self, data):
+        self.scrollview.add_item(data)
+
+    def find_letter(self):
+        self.scrollview.scroll_to(self.letter)
+
+    def value_to_letter(self, value):
+        self.letter = chr(abs(value - 26) + ord('A'))
+
+    def scroll_change(self, scrlv, slider, value):
+        self.value_to_letter(value)
+        scrlv.scroll_y = slider.value_normalized
+
+    def slider_change(self, s, instance, value):
+        if value >= 0:
+            #this to avoid 'maximum recursion depth exceeded' error
+            s.value = value
+
+
 class ScrollApp(App):
 
     def build(self):
         b = BoxLayout(padding=[dp(10)])
-        content = [] #AlphaScrollButtons()
+        content = []
         for letter in alphabet:
             for i in range(1, 6):
-                content.append(letter + str(i))
-        asp = AlphaScrollPane(content=content, view_class=AlphaScrollItemButton)
-
-        #asp.add_widget(Button(text='A6'))
-        #asp.add_widget(Button(text='A10'))
+                content.append({'text': letter + str(i)})
+        data_dict = {'sort_key': 'text', 'data': content}
+        asp = AlphaScrollPane(content=data_dict, view_class=AlphaScrollItemButton)
+        asp.add_item({'text': 'A7'})
+        asp.add_item({'text': 'A6'})
+        asp.add_item({'text': 'A6'})
 
         b.add_widget(asp)
         return b

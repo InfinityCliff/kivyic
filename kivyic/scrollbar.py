@@ -153,7 +153,7 @@ class AlphaScrollItemLabel(AlphaScrollItem):
 
 
 class AlphaScrollItemButton(AlphaScrollItemLabel):
-    # TODO add ability to add an action to the button
+    # TODO (v0.2) add ability to add an action to the button
     """
     AlphaScrollItem view_class that has a Button to display the text field.
 
@@ -175,11 +175,24 @@ class AlphaScrollViewSeparators(AlphaScrollItemLabel):
     pass
 
 
+class AlphaScrollBin(BoxLayout):
+    bin_container = ObjectProperty()
+    text = StringProperty('bin label')
+
+    def clear_container(self):
+        self.bin_container.clear_widgets()
+# WORKING HERE develop method to sort bins, try rearanging list of children
+
+# https://stackoverflow.com/questions/3173154/move-an-item-inside-a-list
+# If you want to move an item that's already in the list to the specified position, you would have to delete it and insert it at the new position:
+
+# l.insert(newindex, l.pop(oldindex))
+
 class AlphaScrollView(ScrollView):
     """
     ScrollView container inside of AlphaScrollPane.
 
-    Contains a GridLayout (_container) that holds the view_class
+    Contains a GridLayout (self._container) that holds the view_class
 
     .. versionadded:: 0.1
     """
@@ -187,7 +200,9 @@ class AlphaScrollView(ScrollView):
     content = DictProperty()
     '''
     contains the attribute items that are used in the AlphaScrollItem display.
-
+    
+    format:
+    {'sort_key': value, 'attributes': [{list of dict}, {dict contain attributes for view_class}]
     :attr:`content` is an :class:`~kivy.properties.DictProperty` and
     defaults to {}.
 
@@ -216,7 +231,7 @@ class AlphaScrollView(ScrollView):
     sort_key = None
     # TODO add an exception if this item is not set
     '''
-    Attribute in _view_class that will be used to sort the items
+    Attribute in self._view_class that will be used to sort the items
     
     Required and must be set.
     
@@ -226,7 +241,7 @@ class AlphaScrollView(ScrollView):
     '''
 
     separators = ListProperty()
-    # TODO if bins ar used this can be removed
+    # TODO if bins are used this can be removed
     '''
     list of values that will be used for title of separators in AlphaScrollItemSeparators
 
@@ -235,75 +250,141 @@ class AlphaScrollView(ScrollView):
 
     .. versionadded:: 0.1
     '''
-# WORKING HERE adding comments
+    alpha_bins = DictProperty()
+
     def __init__(self, **kwargs):
-        self.view_class = kwargs.pop('view_class')
+        for l in alphabet:
+            self.alpha_bins[l] = AlphaScrollBin(text=l)
         super(AlphaScrollView, self).__init__(**kwargs)
+        self._container.bind(minimum_height=self._container.setter('height'))
+        for l in alphabet:
+            self._container.add_widget(self.alpha_bins[l])
 
-    @property
-    def view_class(self):
-        return self._view_class
+    def on_content(self, instance, new_content):
+        """
+        Fires when self.content is changed.
+        Sets self.sort_key and calls refresh_view.
 
-    @view_class.setter
-    def view_class(self, value):
-        self._view_class = value
+        :param instance: calling object
+        :param new_content: new value for self.content
 
-    def on_content(self, instance, value):
+        .. versionadded:: 0.1
+        """
+        self.sort_key = new_content['sort_key']
+        self._view_class = new_content['view_class']
         if self._container:
-            self.sort_key = value['sort_key']
             self.refresh_view()
 
-    def on__container(self, instance, value):
-        if value is None or self.content is None or self._view_class is None:
+    def clear_bins(self):
+        for letter in alphabet:
+            self.alpha_bins[letter].clear_container()
+
+    def on__container(self, instance, new__container):
+        """
+        Fires when self._container is changed.
+        Sets self.sort_key and calls refresh_view.
+
+        :param instance: calling object
+        :param new__container:  new value for self._container
+
+        .. versionadded:: 0.1
+        """
+        if new__container is None or self.content is None or self._view_class is None:
             return
-        self.sort_key = self.content['sort_key']
         self.refresh_view()
 
+
     def refresh_view(self):
-        self._container.clear_widgets()
-        for data in self.content['data']:
-            if data[self.sort_key][0] not in self.separators:
-                self.content['data'] = self.add_seperator(data[self.sort_key][0], self.content['data'])
+        """
+        Clears hte scrollview and redraws the widgets in the scrollview, adds separators between each letter group
 
-            self._container.add_widget(self.view_class(data=data))
-        self.sorting = False
+        .. versionadded:: 0.1
+        """
+        self.clear_bins()
+        for attributes in self.content['attributes']:
+            alpha_bin = attributes[self.sort_key][0]
+            self.alpha_bins[alpha_bin].add_widget(self._view_class(attr_dict=attributes))
 
-    def add_item(self, data_dict):
-        new_content = self.content
-        data_list = self.content['data']
-        data_list.append(data_dict)
-        if data_dict[self.sort_key][0] not in self.separators:
-            data_list = self.add_seperator(data_dict[self.sort_key][0], data_list)
-        new_content['data'] = sorted(data_list, key=lambda k: k[self.sort_key])
-        self.content = new_content # should trigger on_content
+    def add_item(self, new_data_dict):
+        """
+        Add an item to the self.content Dictionary
+        :param new_data_dict:
+        :return:
 
-    def add_seperator(self, sep, data_list):
-        data_list.append({'text': sep})
-        self.separators.append(sep)
+        .. versionadded:: 0.1
+        """
+        print(self.content)
+        # add item to content
+        self.content['attributes'].append(new_data_dict)
+
+        # add item to respective bin
+        alpha_bin = new_data_dict[self.sort_key][0]
+        self.alpha_bins[alpha_bin].add_widget(self._view_class(attr_dict=new_data_dict))
+
+    def add_separator(self, separator, data_list):
+        """
+        Adds a separator to list
+
+        :param separator: separator text to add to separator list and data list
+        :param data_list: 
+        :return: appended data list
+
+        .. versionadded:: 0.1
+        """
+        data_list.append({'text': separator})
+        self.separators.append(separator)
         return data_list
 
-
     def scroll_to(self, widget, padding=10, animate=True):
+        """
+        Overrides ScrollView.scroll to allow scrolling to selected letter from slider
+
+        Scrolls the viewport to ensure that the given letter/widget is visible,
+        optionally with padding and animation. If animate is True (the
+        default), then the default animation parameters will be used.
+        Otherwise, it should be a dict containing arguments to pass to
+        :class:`~kivy.animation.Animation` constructor.
+
+        :param widget: widget or letter to scroll to
+        :param padding: int: distance from top of window to top of selected widget
+        :param animate: bool: will it animate
+
+        .. versionadded:: 0.1
+        """
         if type(widget) is str:
             self.scroll_to_letter(widget)
         else:
             super().scroll_to(widget, padding=10, animate=True)
 
     def scroll_to_letter(self, letter, padding=10, animate=True):
+        """
+        Finds first instance of letter and sends the respective widget to self._scroll_to_letter
+
+        :param letter: letter to scroll to
+        :param padding: int: distance from top of window to top of selected widget
+        :param animate: bool: will it animate
+
+        .. versionadded:: 0.1
+        """
         for child in reversed(self._container.children):
             if child.text[0] == letter:
                 self._scroll_to_letter(child, padding=10, animate=True)
                 break
 
     def _scroll_to_letter(self, widget, padding=10, animate=True):
-        '''Scrolls the viewport to ensure that the given widget is visible,
-        optionally with padding and animation. If animate is True (the
-        default), then the default animation parameters will be used.
-        Otherwise, it should be a dict containing arguments to pass to
-        :class:`~kivy.animation.Animation` constructor.
+        # TODO - see if can send back to super() to do scroll, do not think this is any different than scroll view
+        # call to super in scroll_to_letter above
+
+        """
+        Scrolls the viewport to ensure that the given widget is visible
+
+        :param widget:
+        :param padding: int: distance from top of window to top of selected widget
+        :param animate: bool: will it animate
+        :return:
 
         .. versionadded:: 0.1
-        '''
+        """
         if not self.parent:
             return
 
@@ -349,22 +430,59 @@ class AlphaScrollView(ScrollView):
 
 class AlphaScrollPane(RelativeLayout):
     letter = StringProperty()
+    '''
+    Letter from slider to send to AlphaScrollView for scrolling to
+
+    :attr:`letter` is an :class:`~kivy.properties.StringProperty` and
+    defaults to ''.
+
+    .. versionadded:: 0.1
+    '''
+
     scrollview = ObjectProperty()
+    '''
+    Pointer to AlphaScrollView.  Created and added in __init__.
+
+    :attr:`scrollview` is an :class:`~kivy.properties.ObjectProperty` and
+    defaults to AlphaScrollView().
+
+    .. versionadded:: 0.1
+    '''
+
     slider = ObjectProperty()
-    content = DictProperty()  # passed on to scrollview
+    '''
+    Pointer to AlphaSlider.  Created and added in __init__.
+
+    :attr:`slider` is an :class:`~kivy.properties.ObjectProperty` and
+    defaults to AlphaSlider().
+
+    .. versionadded:: 0.1
+    '''
+
+    content = DictProperty()
+    '''
+    Passed to AlphaScrollView, see AlphaScrollView.content for more information.
+    
+    .. versionadded:: 0.1
+    '''
+
     container = ObjectProperty()
-    _container = ObjectProperty()
-    _view_class = None
+    '''
+    Pointer to GridLayout that contains the slider and scroll view
+
+    :attr:`container` is an :class:`~kivy.properties.StringProperty` and
+    defaults to ''.
+
+    .. versionadded:: 0.1
+    '''
 
     def __init__(self, **kwargs):
-        self.view_class = kwargs.pop('view_class')
+
         super(AlphaScrollPane, self).__init__(**kwargs)
 
         self.container = StackLayout(orientation='lr-bt')
 
-        self.scrollview = AlphaScrollView(size_hint=(0.9, 0.95), content=self.content,
-                                          view_class=self.view_class)
-        self.scrollview._container.bind(minimum_height=self.scrollview._container.setter('height'))
+        self.scrollview = AlphaScrollView(size_hint=(0.9, 0.95), content=self.content)
 
         self.slider = AlphaSlider(min=1, max=26, value=26, orientation='vertical', step=1, size_hint=(0.1, 0.95), value_track=False)
         self.slider.labels = alphabet
@@ -372,29 +490,10 @@ class AlphaScrollPane(RelativeLayout):
 
         self.container.add_widget(self.scrollview)
         self.container.add_widget(self.slider)
-
-    @property
-    def view_class(self):
-        return self._view_class
-
-    @view_class.setter
-    def view_class(self, value):
-        self._view_class = value
-
-    def on_container(self, instance, value):
-        if self._container:
-            return
-        else:
-            self.add_widget(self.container)
-            self._container = self.container
+        self.add_widget(self.container)
 
     def on_letter(self, *args):
         self.find_letter()
-
-    def add_widget(self, widget, index=0, canvas=None):
-        if self._container:
-            return
-        super().add_widget(widget, index)
 
     def add_item(self, data):
         self.scrollview.add_item(data)
@@ -423,8 +522,8 @@ class ScrollApp(App):
         for letter in alphabet:
             for i in range(1, 6):
                 content.append({'text': letter + str(i)})
-        data_dict = {'sort_key': 'text', 'data': content}
-        asp = AlphaScrollPane(content=data_dict, view_class=AlphaScrollItemButton)
+        content_dict = {'sort_key': 'text', 'attributes': content, 'view_class': AlphaScrollItemButton}
+        asp = AlphaScrollPane(content=content_dict)
         asp.add_item({'text': 'A7'})
         asp.add_item({'text': 'A6'})
         asp.add_item({'text': 'A6'})

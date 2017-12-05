@@ -42,6 +42,18 @@
 <AlphaScrollPane>:
     padding: '10dp'
 
+<AlphaScrollBin>:
+    bin_container: _bin_container
+    size_hint_y: None
+    height: self.minimum_height
+    orientation: 'vertical'
+    Label:
+        text: root.text
+        size_hint_y: None
+        height: '20dp'
+    GridLayout:
+        id: _bin_container
+        cols: 1
 
 <AlphaScrollView>:
     _container: container

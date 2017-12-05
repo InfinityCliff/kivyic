@@ -1,22 +1,23 @@
 
 <AlphaScrollItemLabel>:
-    view_item: _view_item
+    #view_item: _view_item
     size_hint_y: None
     height: self.minimum_height
     Label:
-        id: _view_item
+        #id: _view_item
         text: root.text
         size_hint_y: None
         height: 60
         valign: 'middle'
         font_size: 12
 
+
 <-AlphaScrollItemButton>:
-    view_item: _view_item
+    #view_item: _view_item
     size_hint_y: None
     height: self.minimum_height
     Button:
-        id: _view_item
+        #id: _view_item
         text: root.text
         size_hint_y: None
         height: 60
@@ -24,19 +25,18 @@
         font_size: 12
         on_release: root.parent.parent.add_item({'text': 'A9'})
 
+
 <-AlphaScrollViewSeparators>:
-    view_item: _view_item
+    #view_item: _view_item
     size_hint_y: None
     height: self.minimum_height
     Label:
-        id: _view_item
+        #id: _view_item
         text: root.text
         size_hint_y: None
         height: 20
         valign: 'middle'
         font_size: 12
-
-
 
 
 <AlphaScrollPane>:
@@ -50,6 +50,7 @@
         cols: 1
         size_hint_y: None
 
+
 <AlphaSlider>:
     layout: _layout
     background_width: 0
@@ -58,24 +59,8 @@
         id: _layout
         pos: self.parent.x, self.parent.y + self.parent.padding / 2
         size: self.parent.width, self.parent.height - self.parent.padding
-        #canvas.after:
-        #    Color:
-        #        rgba: 1,0,0,.2
-        #    Rectangle:
-        #        pos: self.parent.x, self.parent.y + self.parent.padding / 2
-        #        size:  self.parent.width, self.parent.height - self.parent.padding
+
 
 <AlphaSBLabel>:
     halign: 'center'
     valign: 'middle'
-    #canvas.before:
-    #    Color:
-    #        rgba: 0,1,0,.2
-    #    RoundedRectangle:
-    #        size: self.size
-    #        pos: self.pos
-    #    Color:
-    #        rgba: 0,0,1,1
-    #    Line:
-    #        points: (self.x, self.y+self.height/2, self.right, self.y+self.height/2)
-            #weight: 1

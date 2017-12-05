@@ -42,19 +42,46 @@ __all__ = ['AlphaScrollView']
 
 
 
-
 class AlphaSBLabel(Label):
+    """
+    Label on the AlphaSlider
+
+    .. versionadded:: 0.1
+    """
     pass
 
 
 class AlphaSlider(Slider):
     labels = ListProperty()
+    '''
+    List of labels along the slider
+
+    :attr:`labels` is an :class:`~kivy.properties.ListProperty` and
+    defaults to [].
+
+    .. versionadded:: 0.1
+    '''
+
     layout = ObjectProperty()
+    '''
+    Pointer to GridLayout containing labels
+
+    :attr:`layout` is an :class:`~kivy.uix.gridlayout.GridLayout`.
+
+    .. versionadded:: 0.1
+    '''
 
     def __init__(self, **kwargs):
         super(AlphaSlider, self).__init__(**kwargs)
 
     def on_labels(self, *args):
+        """
+        Fired when labels is set. adds contents of labels list to layout.
+        :param args:
+        :return: None
+
+        .. versionadded:: 0.1
+        """
         self.layout.clear_widgets()
         for label in self.labels:
             lbl = AlphaSBLabel(text=str(label))
@@ -62,43 +89,153 @@ class AlphaSlider(Slider):
 
 
 class AlphaScrollViewException(Exception):
+    # TODO set up this AlphaScrollViewException
     """
     AlphaScrollView exception, fired when multiple content widgets are added to the
-    popup.
+    scrollview.
 
-    .. versionadded:: 0.1
+    .. versionadded:: 0
     """
 
 
 class AlphaScrollItem(BoxLayout):
-    view_item = ObjectProperty()
-    data = DictProperty()
-    sort_key = None
+    """
+    Base class for view classes to extend that will be displayed in the
+    AlphaScrollView.
 
-    def on_data(self, obj, value):
-        for attr, val in self.data.items():
+    .. versionadded:: 0.1
+    """
+    attr_dict = DictProperty()
+    '''
+    Dictionary of data that will populate the view i.e. {'text': 'spam'}.
+    must contain at least one item that is the sort_key set in AlphaScrollView.
+    
+    Attributes sent in attr_dict should be tied to values in respective class
+    kv definition.
+    
+    :attr:`attr_dict` is an :class:`~kivy.properties.DictProperty` and
+    defaults to {}.
+
+    .. versionadded:: 0.1
+    '''
+
+    def on_attr_dict(self, obj, attrs):
+        """
+        Fires when data changes.  Moves through list of items in data and assigns to
+        respective attributes.  Allows for classes that extend this class to have
+        a dynamic number of attributes that can be sent in one dictionary.
+
+        :param obj:
+        :param attrs: new value for attr_dict
+        :return:
+
+        .. versionadded:: 0.1
+        """
+        for attr, val in attrs.items():
             setattr(self, attr, val)
 
 
 class AlphaScrollItemLabel(AlphaScrollItem):
+    """
+    AlphaScrollItem view_class that has a label to display the text field.
+
+    .. versionadded:: 0.1
+    """
     text = StringProperty()
+    '''
+    Text field.
+
+    :attr:`text` is an :class:`~kivy.properties.StringProperty` and
+    defaults to {}.
+
+    .. versionadded:: 0.1
+    '''
 
 
 class AlphaScrollItemButton(AlphaScrollItemLabel):
+    # TODO add ability to add an action to the button
+    """
+    AlphaScrollItem view_class that has a Button to display the text field.
+
+    .. versionadded:: 0.1
+    """
     pass
 
 
 class AlphaScrollViewSeparators(AlphaScrollItemLabel):
+    # TODO look at adding GridLayouts for each letter, will simplify sorting -- only need to sort respective letter group
+    # can have height go to zero or remove widget if no children
+    """
+    AlphaScrollItem view_class that has a Label to display the text field.
+
+    This view class is the separator/header between each letter group
+
+    .. versionadded:: 0.1
+    """
     pass
 
 
 class AlphaScrollView(ScrollView):
-    content = DictProperty()
-    _container = ObjectProperty()
-    _view_class = None
-    sort_key = None
-    separators = ListProperty()
+    """
+    ScrollView container inside of AlphaScrollPane.
 
+    Contains a GridLayout (_container) that holds the view_class
+
+    .. versionadded:: 0.1
+    """
+
+    content = DictProperty()
+    '''
+    contains the attribute items that are used in the AlphaScrollItem display.
+
+    :attr:`content` is an :class:`~kivy.properties.DictProperty` and
+    defaults to {}.
+
+    .. versionadded:: 0.1
+    '''
+
+    _container = ObjectProperty()
+    '''
+    Pointer to the GridLayout that contains the AlphaScrollItem's
+
+    :attr:`_container` is an :class:`~kivy.properties.ObjectProperty` and
+    defaults to None.
+
+    .. versionadded:: 0.1
+    '''
+
+    _view_class = None
+    '''
+    AlphaScrollItem class that will be displayed for each item in the AlphaScrollView.
+
+    :attr:`_view_class` defaults to None.
+
+    .. versionadded:: 0.1
+    '''
+
+    sort_key = None
+    # TODO add an exception if this item is not set
+    '''
+    Attribute in _view_class that will be used to sort the items
+    
+    Required and must be set.
+    
+    :attr:`sort_key` defaults to None.
+
+    .. versionadded:: 0.1
+    '''
+
+    separators = ListProperty()
+    # TODO if bins ar used this can be removed
+    '''
+    list of values that will be used for title of separators in AlphaScrollItemSeparators
+
+    :attr:`separators` is an :class:`~kivy.properties.ListProperty` and
+    defaults to [].
+
+    .. versionadded:: 0.1
+    '''
+# WORKING HERE adding comments
     def __init__(self, **kwargs):
         self.view_class = kwargs.pop('view_class')
         super(AlphaScrollView, self).__init__(**kwargs)
@@ -112,7 +249,7 @@ class AlphaScrollView(ScrollView):
         self._view_class = value
 
     def on_content(self, instance, value):
-        if self._container and not self.sorting:
+        if self._container:
             self.sort_key = value['sort_key']
             self.refresh_view()
 
@@ -140,7 +277,6 @@ class AlphaScrollView(ScrollView):
         new_content['data'] = sorted(data_list, key=lambda k: k[self.sort_key])
         self.content = new_content # should trigger on_content
 
-# WORKING HERE - need to specify view_class for seperators, may need to be in data list
     def add_seperator(self, sep, data_list):
         data_list.append({'text': sep})
         self.separators.append(sep)

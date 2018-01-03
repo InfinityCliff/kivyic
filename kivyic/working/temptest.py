@@ -12,6 +12,7 @@ from kivy.metrics import dp
 from kivy.utils import platform
 from kivy.clock import Clock
 
+from kivy.uix.widget import Widget
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.behaviors.button import ButtonBehavior
@@ -37,7 +38,7 @@ __all__ = ('FileExplorer',)
 __version__ = '0.0'
 __events__ = ()
 
-Builder.load_file(path + '/menu.kv')
+#Builder.load_file(path + '/menu.kv')
 
 
 class TemplateClass(ThemableBehavior, BoxLayout):
@@ -54,12 +55,18 @@ class TemplateApp(App):
     theme_cls = ThemeManager()
 
     def build(self):
-        tc = TemplateClass()
-        b = Button()
+        #tc = FloatLayout(orientation='horizontal')
+        tc = FloatLayout()
+        b = Button(text='0',
+                   size_hint=(None, None),
+                   size=(30,30),
+                   pos_hint={'center_x': .5})
+        #tc.add_widget(Widget())
         tc.add_widget(b)
-        tc.sort_key = 'text'
-        b['text'] = 'sort key'
-        b.get()
+        #tc.add_widget(Widget())
+        #b.center_x = tc.center_x
+        print(tc.center_x)
+        print(b.center_x)
         return tc
 
 

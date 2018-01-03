@@ -13,6 +13,10 @@ path = os.path.dirname(__file__)
 #fonts_path = os.path.join(path, "fonts/")
 #images_path = os.path.join(path, 'images/')
 alphabet = [chr(i-1+ord('A')) for i in range(1, 27)]
+numbers = [str(n) for n in (range(0, 10))]
+symbols = [chr(s) for s in range(33, 47)] + [chr(95)]
+
+alpha_num_sym = sorted(alphabet + symbols + numbers)
 
 Logger.info("KivyIC: KivyIC version: {}".format(__version__))
 

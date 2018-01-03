@@ -1,3 +1,6 @@
+_secret/
+kivyic/_secret/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

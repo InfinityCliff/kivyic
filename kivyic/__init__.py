@@ -24,6 +24,7 @@ Logger.info("KivyIC: KivyIC version: {}".format(__version__))
 def ColorProperty(rgba):
     return [x / 255 for x in rgba[:3]] + [rgba[-1]]
 
+
 class ColorProperty1(ListProperty):
     color_property = ListProperty()
 
@@ -32,6 +33,7 @@ class ColorProperty1(ListProperty):
 
     def on_color_property(self, rgba, *args):
         cp = [x / 255 for x in rgba[:3]] + [rgba[-1]]
+
 
 def summary():
     # print a summary of each .py file in the module

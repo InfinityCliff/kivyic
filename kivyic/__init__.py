@@ -20,6 +20,9 @@ alpha_num_sym = sorted(alphabet + symbols + numbers)
 
 Logger.info("KivyIC: KivyIC version: {}".format(__version__))
 
+DEBUG = False
+DEBUG_INTERNET = True
+
 
 def ColorProperty(rgba):
     return [x / 255 for x in rgba[:3]] + [rgba[-1]]

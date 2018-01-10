@@ -1,0 +1,34 @@
+#:import md_icons   kivymd.icon_definitions.md_icons
+
+<ICBaseButton>:
+    color: 1, 1, 1, 1
+    background_normal: ''
+    background_down: ''
+    background_color_normal: 0, 0, 0, 1
+    background_color_down: 0, 0, 0, .3
+    background_color: self.background_color_normal
+    #pos_hint: {'center_y': 0.5}
+    valign: 'middle'
+    halign: 'center'
+    on_press: self.background_color = self.background_color_down
+    on_release: self.background_color = self.background_color_normal
+
+<ICIconButton>:
+    id: content
+    font_style: 'Icon'
+    text: u"{}".format(md_icons[root.icon])
+    theme_text_color: root.theme_text_color
+    text_color: root.text_color
+    disabled: root.disabled
+    valign: 'middle'
+    halign: 'center'
+    opposite_colors: root.opposite_colors
+
+<ICRoundedButton>:
+    canvas.before:
+        Color:
+            rgba: self.background_color
+        RoundedRectangle:
+            size: self.size
+            pos: self.pos
+            radius: [self.height / 2]

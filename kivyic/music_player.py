@@ -1,6 +1,11 @@
+# -*- coding: utf-8 -*-
 import pickle
 
 from kivyic._secret.app_credentials import SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI
+from kivyic.network import internet_online
+from kivyic import material_resources as mat_rsc
+from kivyic.label import ICIconLabel
+from kivyic.button import ICIconButton
 
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
@@ -8,8 +13,33 @@ from spotipy.oauth2 import SpotifyOAuth
 import pprint
 import random
 
+from kivy.app import App
+from kivy.lang.builder import Builder
+from kivy.clock import Clock
+
+from kivy.uix.behaviors import ButtonBehavior
 from kivy.properties import StringProperty, ObjectProperty, ListProperty, DictProperty
+
 from kivy.uix.widget import Widget
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.togglebutton import ToggleButton
+
+from kivy.graphics.texture import Texture
+
+from kivymd.theming import ThemeManager
+from kivymd.button import MDFlatButton, BaseFlatButton, BasePressedButton, BaseRoundButton
+
+Builder.load_file('music_player.kv')
+
+
+class MPIconButton(ICIconButton):
+    icon = StringProperty('checkbox-blank-circle')
+
+
+class MPBaseButton(ToggleButton):
+    pass
 
 
 class Library(Widget):
@@ -67,59 +97,6 @@ import base64
 SCOPE = 'user-library-read'
 
 
-def prompt_for_user_token(username, scope=None, client_id=None,
-                          client_secret=None, redirect_uri=None,
-                          cache_path=None):
-    ''' prompts the user to login if necessary and returns
-        the user token suitable for use with the spotipy.Spotify
-        constructor
-
-        Parameters:
-
-         - username - the Spotify username
-         - scope - the desired scope of the request
-         - client_id - the client id of your app
-         - client_secret - the client secret of your app
-         - redirect_uri - the redirect URI of your app
-         - cache_path - path to location to save tokens
-
-    '''
-
-    if not client_id:
-        print('''
-            You need to set your Spotify API credentials. 
-            
-            Get your credentials at     
-                https://developer.spotify.com/my-applications
-        ''')
-        raise spotipy.SpotifyException(550, -1, 'no credentials set')
-
-    cache_path = cache_path or ".cache-" + username
-    sp_oauth = oauth2.SpotifyOAuth(client_id, client_secret, redirect_uri,
-                                   scope=scope, cache_path=cache_path)
-
-    # try to get a valid token for this user, from the cache,
-    # if not in the cache, the create a new (this will send
-    # the user to a web page where they can authorize this app)
-
-    token_info = sp_oauth.get_cached_token()
-
-    if not token_info:
-        print('''toast:
-
-            Click 'Okay' to allow app access to Spotify user data.
-            Click 'Cancel' to refuse - app will not be able to read
-                user data - including playlist's and music library.
-
-        ''')
-        auth_url = sp_oauth.get_authorize_url()
-        try:
-            import webbrowser
-            webbrowser.open(auth_url)
-        except:
-            print("Please navigate here: %s" % auth_url)
-
-
 class SpotifyClient(Library):
 
     client_credentials_manager = None
@@ -129,12 +106,6 @@ class SpotifyClient(Library):
 
     def __init__(self, **kwargs):
         super(SpotifyClient, self).__init__(**kwargs)
-        #self.get_token(SCOPE)
-        prompt_for_user_token(self.username, scope=SCOPE,
-                              client_id=SPOTIPY_CLIENT_ID,
-                              client_secret=SPOTIPY_CLIENT_SECRET,
-                              redirect_uri=SPOTIPY_REDIRECT_URI,
-                              cache_path='/rsc/.spotify_cache')
 
     def show_user(self):
         user = self.sp.user(self.username)
@@ -199,7 +170,6 @@ class HDClient:
 
 
 from bottle import route, run, request, abort, Bottle
-app = Bottle()
 
 
 STATE = StringProperty()
@@ -212,22 +182,17 @@ class BottleServerInterface(Widget):
     def __init__(self, oauth2, **kwargs):
         super(BottleServerInterface, self).__init__(**kwargs)
         self.server_interface_oauth2 = oauth2
-#        self.register_event_type('on_new_code')
-
-#    def on_new_code(self, *args):
-#        pass
 
     def bottle_server(self):
         start_bottle_server(callback=self.code_return)
 
     def code_return(self, code):
+        print('code returned')
         self.code = code
 
-#    def on_code(self, obj, value, *args):
-#        print('CODE **********************')
-#        print(value)
-#        self.dispatch('on_new_code')
 
+
+app = Bottle()
 
 
 @app.route('/')
@@ -259,39 +224,177 @@ def spotify_callback():
 
 
 def start_bottle_server(callback):
+    print('toast: Starting http server...')
     app.callback = callback
     run(app, host='localhost', port='8080')
 
     return
 
 
+class SongView(BoxLayout):
+    title = StringProperty()
+    artist = StringProperty()
+
+
+class SongsContent(BoxLayout):
+    song_list = ObjectProperty()
+    view_class = 'SongView'
+    def add_song(self, song_dict):
+
+
+
+class ContentSelector(BoxLayout):
+
+    def __init__(self, **kwargs):
+        super(ContentSelector, self).__init__(**kwargs)
+        self.register_event_type('on_header')
+
+    def on_header(self, *args):
+        pass
+
+
+class Controls(BoxLayout):
+
+    def __init__(self, **kwargs):
+        super(Controls, self).__init__(**kwargs)
+        self.register_event_type('on_control')
+
+    def on_control(self, *args):
+        pass
+
+
 import threading
-threads = []
 
 
-class MusicPlayer(Widget):
+class MusicPlayer(BoxLayout):
+    controls = ObjectProperty()
+    content_selector = ObjectProperty()
     client = StringProperty()
     player = ObjectProperty()
     username = StringProperty()
     server_interface = None
     server = None
     spotify_oauth = None
+    authorized = False
+    textures = DictProperty()
+    threads = []
+    back_content_color = ListProperty()
+
+    content = ObjectProperty(None)
+    '''
+    Container widget for what will be displayed in the Music Player.
+
+    :attr:`content` is an :class:`~kivy.properties.ObjectProperty` and
+    defaults to None.
+
+    .. versionadded:: 0.1
+    '''
+    _container = ObjectProperty()
+
+    def __init__(self, **kwargs):
+        super(MusicPlayer, self).__init__(**kwargs)
+        self.back_content_color = mat_rsc.SPOTIFY_SONGS
 
     def on_client(self, obj, value, *args):
         self.player = {'Spotify': SpotifyClient(), 'Ipod': IpodClient(),
                        'USB': USBClient(), 'HD': HDClient()}[value]
         self.player.username = self.username
+        Clock.schedule_once(self.set_bindings)
+        if internet_online():
+            self.spotify_oauth = SpotifyOAuth(client_id=SPOTIPY_CLIENT_ID,
+                                              client_secret=SPOTIPY_CLIENT_SECRET,
+                                              redirect_uri=SPOTIPY_REDIRECT_URI,
+                                              scope=SCOPE)
+            self.server_interface = BottleServerInterface(oauth2=self.spotify_oauth)
+            self.server_interface.bind(code=self.push_code)
 
-        self.spotify_oauth = SpotifyOAuth(client_id=SPOTIPY_CLIENT_ID,
-                                          client_secret=SPOTIPY_CLIENT_SECRET,
-                                          redirect_uri=SPOTIPY_REDIRECT_URI,
-                                          scope=SCOPE)
-        self.server_interface = BottleServerInterface(oauth2=self.spotify_oauth)
-        self.server_interface.bind(code=self.push_code)
+            self.server = threading.Thread(target=self.start_server)
+            self.threads.append(self.server)
+            self.server.start()
+            print('toast: authorizing....')
+            self.prompt_for_user_token()
+            while True:
+                if self.authorized:
+                    break
 
-        self.server = threading.Thread(target=self.start_server)
-        threads.append(self.server)
-        self.server.start()
+    def on_content(self, instance, value):
+        if self._container:
+            self._container.clear_widgets()
+            self._container.add_widget(value)
+
+    def on__container(self, instance, value):
+        if value is None or self.content is None:
+            return
+        self._container.clear_widgets()
+        self._container.add_widget(self.content)
+
+    def set_bindings(self, *args):
+        if internet_online():
+            self.server_interface.bind(on_code=self._new_code)
+        self.controls.bind(on_control=self.button_pressed)
+        self.content_selector.bind(on_header=self.button_pressed)
+        # WORKING HERE - set calls to respective function based on button presses on content currently selected
+
+    def button_pressed(self, obj, con_type, *args):
+        if len(args) > 0:
+            self.back_content_color = args[0]
+
+    def online(self):
+        return False
+
+    def _new_code(self, obj, value, *args):
+        print('getting token')
+        token = self.spotify_oauth.get_access_token(value)
+        print(token)
+        # WORKING HERE - testing to see if code is returned and token recieved
+
+    def prompt_for_user_token(self, cache_path=None):
+        ''' prompts the user to login if necessary and returns
+            the user token suitable for use with the spotipy.Spotify
+            constructor
+
+            Parameters:
+
+             - username - the Spotify username
+             - scope - the desired scope of the request
+             - client_id - the client id of your app
+             - client_secret - the client secret of your app
+             - redirect_uri - the redirect URI of your app
+             - cache_path - path to location to save tokens
+
+        '''
+
+        if not SPOTIPY_CLIENT_ID:
+            print('''
+                You need to set your Spotify API credentials. 
+
+                Get your credentials at     
+                    https://developer.spotify.com/my-applications
+            ''')
+            raise spotipy.SpotifyException(550, -1, 'no credentials set')
+
+        self.spotify_oauth.cache_path = cache_path or ".cache-" + self.username
+
+        # try to get a valid token for this user, from the cache,
+        # if not in the cache, the create a new (this will send
+        # the user to a web page where they can authorize this app)
+
+        token_info = self.spotify_oauth.get_cached_token()
+
+        if not token_info:
+            print('''toast:
+
+                Click 'Okay' to allow app access to Spotify user data.
+                Click 'Cancel' to refuse - app will not be able to read
+                    user data - including playlist's and music library.
+
+            ''')
+            auth_url = self.spotify_oauth.get_authorize_url()
+            try:
+                import webbrowser
+                webbrowser.open(auth_url)
+            except:
+                print("Please navigate here: %s" % auth_url)
 
     def start_server(self):
         self.server_interface.bottle_server()
@@ -306,6 +409,17 @@ class MusicPlayer(Widget):
         self.player.test()
 
 
+class TestApp(App):
+    title = 'Music Player Test App'
+    theme_cls = ThemeManager()
+    music_player = ObjectProperty()
+
+    def build(self):
+        b = BoxLayout()
+        self.music_player = MusicPlayer(username='skxnoy', client='Spotify')
+        b.add_widget(self.music_player)
+        return b
+
+
 if __name__ == '__main__':
-    music_player = MusicPlayer(username='skxnoy', client='Spotify')
-    music_player.test()
+    TestApp().run()

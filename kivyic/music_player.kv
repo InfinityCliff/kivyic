@@ -1,0 +1,163 @@
+#: import mat_rsc kivyic.material_resources
+#: import ICRoundedButton kivyic.button.ICRoundedButton
+#: import AlphaScrollPane kivyic.scrollbar.AlphaScrollPane
+
+<MPBaseButton>:
+    background_normal: ''
+    background_down: ''
+    background_color: 0,0,0,0
+    pos_hint: {'center_y': 0.5}
+    color: [0,0,0,1]
+    size_hint: None, 1
+    color: mat_rsc.SPOTIFY_TEXT
+
+<MPHeaderButton@MPBaseButton>:
+    size_hint_y: None
+    height: '30dp'
+    line_offset_x: 15
+    line_offset_y: 5
+    color: mat_rsc.SPOTIFY_TEXT if self.state == 'normal' else mat_rsc.SPOTIFY_TEXT_ACTIVE
+    canvas.after:
+        Color:
+            rgba:[0,1,0,1] if self.state == 'down' else [0,0,0,0]
+        Line:
+            points: (self.center_x - self.line_offset_x, self.y + self.line_offset_y, self.center_x + self.line_offset_x, self.y + self.line_offset_y)
+            width: 2
+
+<MPIconButton>:
+    size_hint_y: None
+    height: '30dp'
+    color: mat_rsc.SPOTIFY_BUTTON
+    text_color:
+    on_press: self.color = mat_rsc.SPOTIFY_BUTTON_DOWN
+    on_release: self.color = mat_rsc.SPOTIFY_BUTTON
+
+<SongProgress@BoxLayout>
+    Label:
+        text: '0:00'
+        size_hint_x: 0.20
+    ProgressBar:
+    Label:
+        text: '0:00'
+        size_hint_x: 0.20
+
+<ContentSelector>:
+    padding: 0, 0, 0, 5
+    size_hint_y: None
+    height: self.minimum_height
+    Label:
+        size_hint_y: None
+        height: 0
+    MPHeaderButton:
+        text: 'SONGS'
+        group: 'ContentSelector'
+        state: 'down'
+        on_press: root.dispatch('on_header', 'SONGS',  mat_rsc.SPOTIFY_SONGS)
+    MPHeaderButton:
+        text: 'ALBUMS'
+        group: 'ContentSelector'
+        on_press: root.dispatch('on_header', 'ALBUMS', mat_rsc.SPOTIFY_ALBUMS)
+    MPHeaderButton:
+        text: 'ARTISTS'
+        group: 'ContentSelector'
+        on_press: root.dispatch('on_header', 'ARTISTS', mat_rsc.SPOTIFY_ARTISTS)
+    MPHeaderButton:
+        text: 'PLAYLISTS'
+        group: 'ContentSelector'
+        on_press:  root.dispatch('on_header', 'PLAYLISTS', mat_rsc.SPOTIFY_PLAYLISTS)
+    MPHeaderButton:
+        text: 'DAILY MIX'
+        group: 'ContentSelector'
+        on_press: root.dispatch('on_header', 'DAILY MIX', mat_rsc.SPOTIFY_DAILY_MIX)
+    Label:
+        size_hint_y: None
+        height: 0
+
+<Controls>:
+    orientation: 'vertical'
+    size_hint_y: None
+    height: self.minimum_height
+    padding: 0, 10
+    BoxLayout:
+        size_hint_y: None
+        height: self.minimum_height
+        Label:
+        MPIconButton:
+            icon: 'shuffle-variant'
+            on_press: root.dispatch('on_control', 'shuffle')
+        MPIconButton:
+            icon: 'skip-previous'
+            on_press: root.dispatch('on_control', 'previous')
+        MPIconButton:
+            icon: 'play-circle-outline'
+            on_press: root.dispatch('on_control', 'play')
+        MPIconButton:
+            icon: 'skip-next'
+            on_press: root.dispatch('on_control', 'next')
+        MPIconButton:
+            icon: 'repeat'
+            on_press: root.dispatch('on_control', 'repeat')
+        Label:
+    SongProgress:
+        size_hint_y: None
+        height: '25dp'
+
+<SongView>:
+    title: _title
+    artist: _artist
+    BoxLayout:
+        Label:
+            text: root.title
+        Label:
+            text: root.artist
+    Button:
+        text: '...'
+
+<SongsContent>:
+    song_list: _song_list
+    orientation: 'vertical'
+    FloatLayout:
+        size_hint_y: None
+        height: '30dp'
+        ICRoundedButton:
+            size_hint_x: 0.25
+            pos_hint: {'x': 0.05, 'top': 1}
+            text: 'Shuffle Play'
+            background_color_normal: mat_rsc.SPOTIFY_GREEN
+            background_color_down: mat_rsc.SPOTIFY_DARK_GREEN
+        BoxLayout:
+            size_hint_x: 0.3
+            pos_hint: {'right': 1, 'top': 1}
+            Label:
+                text: 'Downloaded'
+            Switch:
+                state: False
+    AlphaScrollPane:
+        id: _song_list
+
+
+<MusicPlayer>:
+    container: _container
+    controls: _controls
+    content_selector: _content_selector
+    orientation: 'vertical'
+    canvas.before:
+        Color:
+            rgba: root.back_content_color
+        Rectangle:
+            size: self.size
+            pos: self.pos
+    ContentSelector:
+        id: _content_selector
+        #pos_hint: {'top': 1}
+    BoxLayout:
+        id: _container
+        SongsContent:
+    Controls:
+        id: _controls
+        canvas.before:
+            Color:
+                rgba: mat_rsc.SPOTIFY_GREY
+            Rectangle:
+                size: self.size
+                pos: self.pos

@@ -508,7 +508,11 @@ class AlphaScrollPane(RelativeLayout):
             self.letter = value.upper()
 
     def scroll_change(self, scrlv, slider, value):
-        letter = list(reversed(slider.labels))[value-1]
+        if len(slider.labels) == 0:
+            alphalist = alphabet
+        else:
+            alphalist = slider.labels
+        letter = list(reversed(alphalist))[value-1]
         self.value_to_letter(letter)
         scrlv.scroll_y = slider.value_normalized
 

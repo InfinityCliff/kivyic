@@ -62,7 +62,6 @@ def spotify_callback():
     # We'll change this next line in just a moment
     return "got a code! %s" % code
 
-# WORKING HERE
 def get_token(code):
     print('get_token')
     client_auth = request.auth.HTTPBasicAuth(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET)

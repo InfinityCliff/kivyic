@@ -6,6 +6,7 @@ from kivyic.network import internet_online
 from kivyic import material_resources as mat_rsc
 from kivyic.label import ICIconLabel
 from kivyic.button import ICIconButton
+from kivyic.scrollbar import AlphaScrollItem
 
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
@@ -17,6 +18,7 @@ from kivy.app import App
 from kivy.lang.builder import Builder
 from kivy.clock import Clock
 
+from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.properties import StringProperty, ObjectProperty, ListProperty, DictProperty
 
@@ -231,16 +233,92 @@ def start_bottle_server(callback):
     return
 
 
-class SongView(BoxLayout):
+class SongView(ButtonBehavior, AlphaScrollItem):
     title = StringProperty()
     artist = StringProperty()
+    album = StringProperty()
 
 
-class SongsContent(BoxLayout):
+class SongsScreen(BoxLayout):
     song_list = ObjectProperty()
     view_class = 'SongView'
-    def add_song(self, song_dict):
+    content = ListProperty()
+    content_dict = DictProperty()
 
+    def __init__(self, **kwargs):
+        super(SongsScreen, self).__init__(**kwargs)
+        Clock.schedule_once(self.post_init)
+
+    def post_init(self, *args):
+        self.content = [{'title': 'Dreaming of You', 'artist': 'The Coral', 'album': 'The Coral', 'view_class': SongView},
+                        {'title': 'Stagefright', 'artist': 'Def Leppard', 'album': 'Hysteria', 'view_class': SongView},
+                        {'title': 'Mirror Ball', 'artist': 'Elbow', 'album': 'The Seldom Seen Kid', 'view_class': SongView},
+                        ]
+        self.content_dict = {'sort_key': 'title', 'attributes': self.content}
+        self.song_list.content = self.content_dict
+
+    def add_song(self, song_dict):
+        pass
+
+
+class AlbumView(ButtonBehavior, AlphaScrollItem):
+    title = StringProperty()
+    artist = StringProperty()
+    album = StringProperty()
+
+
+class AlbumsScreen(BoxLayout):
+    album_list = ObjectProperty()
+    view_class = AlbumView
+    content = ListProperty()
+    content_dict = DictProperty()
+
+    def __init__(self, **kwargs):
+        super(AlbumsScreen, self).__init__(**kwargs)
+        Clock.schedule_once(self.post_init)
+
+    def post_init(self, *args):
+        self.content = [{'title': 'Dreaming of You', 'artist': 'The Coral', 'album': 'The Coral', 'view_class': self.view_class},
+                        {'title': 'Stagefright', 'artist': 'Def Leppard', 'album': 'Hysteria', 'view_class': self.view_class},
+                        {'title': 'Mirror Ball', 'artist': 'Elbow', 'album': 'The Seldom Seen Kid', 'view_class': self.view_class},
+                        ]
+        self.content_dict = {'sort_key': 'album', 'attributes': self.content}
+        self.album_list.content = self.content_dict
+
+    def add_album(self, album_dict):
+        pass
+
+
+class ArtistView(ButtonBehavior, AlphaScrollItem):
+    title = StringProperty()
+    artist = StringProperty()
+    album = StringProperty()
+
+
+class ArtistsScreen(BoxLayout):
+    artist_list = ObjectProperty()
+    view_class = ArtistView
+    content = ListProperty()
+    content_dict = DictProperty()
+
+    def __init__(self, **kwargs):
+        super(ArtistsScreen, self).__init__(**kwargs)
+        Clock.schedule_once(self.post_init)
+
+    def post_init(self, *args):
+        self.content = [{'title': 'Dreaming of You', 'artist': 'The Coral', 'album': 'The Coral', 'view_class': self.view_class},
+                        {'title': 'Stagefright', 'artist': 'Def Leppard', 'album': 'Hysteria', 'view_class': self.view_class},
+                        {'title': 'Mirror Ball', 'artist': 'Elbow', 'album': 'The Seldom Seen Kid', 'view_class': self.view_class},
+                        ]
+        self.content_dict = {'sort_key': 'artist', 'attributes': self.content}
+        self.artist_list.content = self.content_dict
+
+class PlayListsScreen(BoxLayout):
+    pass
+
+
+class DailyMixScreen(BoxLayout):
+    pass
 
 
 class ContentSelector(BoxLayout):
@@ -280,16 +358,16 @@ class MusicPlayer(BoxLayout):
     threads = []
     back_content_color = ListProperty()
 
-    content = ObjectProperty(None)
+    screen_manager = ScreenManager()
     '''
-    Container widget for what will be displayed in the Music Player.
+    Manager screen shown when content button is selected in the Music Player.
 
-    :attr:`content` is an :class:`~kivy.properties.ObjectProperty` and
-    defaults to None.
+    :attr:`content` is an :class:`~kivy.uix.screenmanager.ScreenManager` and
+    defaults to ''.
 
     .. versionadded:: 0.1
     '''
-    _container = ObjectProperty()
+    #_container = ObjectProperty()
 
     def __init__(self, **kwargs):
         super(MusicPlayer, self).__init__(**kwargs)
@@ -317,27 +395,30 @@ class MusicPlayer(BoxLayout):
                 if self.authorized:
                     break
 
-    def on_content(self, instance, value):
-        if self._container:
-            self._container.clear_widgets()
-            self._container.add_widget(value)
+    #def on_content(self, instance, value):
+    #    if self._container:
+    #        self._container.clear_widgets()
+    #        self._container.add_widget(value)
 
-    def on__container(self, instance, value):
-        if value is None or self.content is None:
-            return
-        self._container.clear_widgets()
-        self._container.add_widget(self.content)
+   #def on__container(self, instance, value):
+   #     if value is None or self.content is None:
+   #         return
+   #     self._container.clear_widgets()
+   #     self._container.add_widget(self.content)
 
     def set_bindings(self, *args):
         if internet_online():
             self.server_interface.bind(on_code=self._new_code)
         self.controls.bind(on_control=self.button_pressed)
         self.content_selector.bind(on_header=self.button_pressed)
-        # WORKING HERE - set calls to respective function based on button presses on content currently selected
 
     def button_pressed(self, obj, con_type, *args):
         if len(args) > 0:
             self.back_content_color = args[0]
+        # WORKING HERE - set calls to respective function based on button presses on content currently selected
+        # TO CONSIDER - may want to use a screen here, see how load times are, or create each content as an object property
+        if con_type in ['SONGS', 'ALBUMS', 'ARTISTS', 'PLAYLISTS', 'DAILY MIX']:
+            self.screen_manager.current = con_type
 
     def online(self):
         return False
@@ -418,8 +499,8 @@ class TestApp(App):
         b = BoxLayout()
         self.music_player = MusicPlayer(username='skxnoy', client='Spotify')
         b.add_widget(self.music_player)
-        return b
 
+        return b
 
 if __name__ == '__main__':
     TestApp().run()

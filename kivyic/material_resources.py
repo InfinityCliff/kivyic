@@ -25,6 +25,7 @@ else:
 '''   Colors   '''
 # =====================================================================================
 SPOTIFY_GREY =          ColorProperty([40,   40,  40, 1])
+SPOTIFY_LT_GREY =       ColorProperty([146, 154, 171, 1])
 SPOTIFY_GREEN =         ColorProperty([29,  185,  84, 1])
 SPOTIFY_DARK_GREEN =    ColorProperty([29,  185,  84, .5])
 SPOTIFY_TEXT =          ColorProperty([165, 160, 149, 1])

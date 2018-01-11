@@ -9,8 +9,17 @@ from kivyic import ColorProperty
 from itertools import compress
 from functools import partial
 
-__all__ = []
+import inspect
+
+__all__ = ['dprint']
 __version__ = '0.0'
+
+
+def dprint(depth, *args):
+    for d in range(1, depth + 1):
+        print(d, ':', inspect.stack()[d][3])
+
+
 
 def color_canvas(widget, color=None, before=False, after=True, canvas=False):
     Clock.schedule_once(partial(_color_canvas, widget, color, before, after, canvas))

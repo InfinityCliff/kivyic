@@ -30,10 +30,12 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.popup import Popup
 
 from kivyic import path, alphabet
+from kivyic.debug import dprint
 
 from functools import partial
 from operator import itemgetter, attrgetter, methodcaller
 
+import inspect
 
 from kivy.uix.recycleview import RecycleView
 Builder.load_file(path + '/scrollbar.kv')
@@ -100,15 +102,15 @@ class AlphaSlider(Slider):
         self.max = l_count
         self.value = l_count
 
-        print(self.parent.size)
+        #print(self.parent.size)
 
 
-        print('slider height   :', self.height)
-        print('layout height   :', self.layout.height)
-        print('layout size     :', self.layout.size)
-        print('layout min size :', self.layout.minimum_height)
+        #print('slider height   :', self.height)
+        #print('layout height   :', self.layout.height)
+        #print('layout size     :', self.layout.size)
+        #print('layout min size :', self.layout.minimum_height)
 
-        print('padding         :', self.padding)
+        #print('padding         :', self.padding)
 
 class AlphaScrollViewException(Exception):
     """
@@ -224,8 +226,9 @@ class AlphaBin(GridLayout):
             return True
         return False
 
+
 class AlphaBinView(GridLayout):
-    bins = {}
+    bins = DictProperty()
     content = ObjectProperty()
     '''
     contains the attribute items that are used in the AlphaBin display.
@@ -237,13 +240,15 @@ class AlphaBinView(GridLayout):
 
     .. versionadded:: 0.1
     '''
-    item_list = []
     sort_key = StringProperty()
+
+    def on_item_list(self, obj, *args):
+        print(obj)
 
     def __init__(self, **kwargs):
         super(AlphaBinView, self).__init__(**kwargs)
-        self.bin_headers = alphabet
-        for l in self.bin_headers:
+        #self.bin_headers = alphabet
+        for l in alphabet:
             b = AlphaBin(bin_title=l)
             self.bins[l] = b
             self.add_widget(b)
@@ -257,9 +262,9 @@ class AlphaBinView(GridLayout):
     def add_widget(self, widget, index=0):
         if isinstance(widget, dict):
             letter = widget[self.sort_key][0]
-            # create bin item and at to respective bin and append to item list
-            # TODO - is item_list needed???
-            self.item_list.append(self.bins[letter].add_widget(widget))
+            # create bin item and add to respective bin and append to item list
+            self.bins[letter].sort_key = self.sort_key
+            self.bins[letter].add_widget(widget)
         else:
             super().add_widget(widget, index)
 
@@ -273,6 +278,7 @@ class AlphaBinView(GridLayout):
 
     def labels(self):
         return [b for b in self.bins.keys() if self.bins[b].not_empty]
+
 
 class AlphaScrollView(ScrollView):
     """
@@ -311,6 +317,10 @@ class AlphaScrollView(ScrollView):
         self._alpha_bins.content = self.content
         self._alpha_bins.bind(minimum_height=self._alpha_bins.setter('height'))
         self.add_widget(self._alpha_bins)
+
+    def on_content(self, obj, value, *args):
+        if self._alpha_bins:
+            self._alpha_bins.content = value
 
     def add_widget(self, widget, index=0):
         """
@@ -474,20 +484,21 @@ class AlphaScrollPane(RelativeLayout):
 
         super(AlphaScrollPane, self).__init__(**kwargs)
 
-        #self.container = StackLayout(orientation='lr-bt')
         self.container = GridLayout(rows=1)
         self.scrollview = AlphaScrollView(size_hint=(0.9, 0.95), content=self.content)
 
         self.slider = AlphaSlider(min=1, orientation='vertical', step=1, #size_hint=(0.1, 0.95),
                                   value_track=False, labels=self.scrollview.bin_labels)
-        #self.slider.bind(center_y=lambda x,y: self.container.center_y)
-        #self.slider.labels = self.scrollview.bin_labels
 
         self.slider.bind(value=partial(self.scroll_change, self.scrollview))
 
         self.container.add_widget(self.scrollview)
         self.container.add_widget(self.slider)
         self.add_widget(self.container)
+
+    def on_content(self, obj, value, *args):
+        if self.scrollview:
+            self.scrollview.content = value
 
     def on_letter(self, *args):
         self.find_letter()
@@ -516,14 +527,16 @@ class AlphaScrollPane(RelativeLayout):
         self.value_to_letter(letter)
         scrlv.scroll_y = slider.value_normalized
 
-    def slider_change(self, s, instance, value):
+    @staticmethod
+    def slider_change(s, instance, value):
         if value >= 0:
-            #this to avoid 'maximum recursion depth exceeded' error
+            # this to avoid 'maximum recursion depth exceeded' error
             s.value = value
 
 
 class ScrollApp(App):
     asp = ObjectProperty
+
     def build(self):
         b = BoxLayout(padding=[dp(10)])
         content = []
@@ -536,7 +549,6 @@ class ScrollApp(App):
         self.asp.add_widget({'text': 'A6', 'view_class': AlphaScrollItemButton})
         self.asp.add_widget({'text': 'A6', 'view_class': AlphaScrollItemButton})
 
-        #asp.scrollview.add_widget(Button())
         b.add_widget(self.asp)
         return b
 

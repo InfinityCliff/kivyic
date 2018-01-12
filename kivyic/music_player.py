@@ -135,6 +135,9 @@ class SpotifyClient(Library):
             print("toast: Can't get token for", self.username)
         self.add_music_library(library)
 
+    def shuffle(self, what):
+        print('Shuffle', what)
+
     def test(self):
         sp = spotipy.Spotify(auth=self.token)
         if self.token:
@@ -325,9 +328,9 @@ class ContentSelector(BoxLayout):
 
     def __init__(self, **kwargs):
         super(ContentSelector, self).__init__(**kwargs)
-        self.register_event_type('on_header')
+        self.register_event_type('on_header_control')
 
-    def on_header(self, *args):
+    def on_header_control(self, *args):
         pass
 
 
@@ -341,11 +344,21 @@ class Controls(BoxLayout):
         pass
 
 
+class SecondaryControls(FloatLayout):
+
+    def __init__(self, **kwargs):
+        super(SecondaryControls, self).__init__(**kwargs)
+        self.register_event_type('on_secondary_control')
+
+    def on_secondary_control(self, *args):
+        pass
+
 import threading
 
 
 class MusicPlayer(BoxLayout):
     controls = ObjectProperty()
+    secondary_controls = ObjectProperty()
     content_selector = ObjectProperty()
     client = StringProperty()
     player = ObjectProperty()
@@ -367,7 +380,6 @@ class MusicPlayer(BoxLayout):
 
     .. versionadded:: 0.1
     '''
-    #_container = ObjectProperty()
 
     def __init__(self, **kwargs):
         super(MusicPlayer, self).__init__(**kwargs)
@@ -395,30 +407,28 @@ class MusicPlayer(BoxLayout):
                 if self.authorized:
                     break
 
-    #def on_content(self, instance, value):
-    #    if self._container:
-    #        self._container.clear_widgets()
-    #        self._container.add_widget(value)
-
-   #def on__container(self, instance, value):
-   #     if value is None or self.content is None:
-   #         return
-   #     self._container.clear_widgets()
-   #     self._container.add_widget(self.content)
-
     def set_bindings(self, *args):
         if internet_online():
             self.server_interface.bind(on_code=self._new_code)
-        self.controls.bind(on_control=self.button_pressed)
-        self.content_selector.bind(on_header=self.button_pressed)
+        self.controls.bind(on_control=self.control)
+        self.content_selector.bind(on_header_control=self.header_control)
+        self.secondary_controls.bind(on_secondary_control=self.secondary_control)
 
-    def button_pressed(self, obj, con_type, *args):
-        if len(args) > 0:
-            self.back_content_color = args[0]
-        # WORKING HERE - set calls to respective function based on button presses on content currently selected
-        # TO CONSIDER - may want to use a screen here, see how load times are, or create each content as an object property
-        if con_type in ['SONGS', 'ALBUMS', 'ARTISTS', 'PLAYLISTS', 'DAILY MIX']:
-            self.screen_manager.current = con_type
+    def header_control(self, obj, con_type, color, *args):
+        self.back_content_color = color
+        self.screen_manager.current = con_type
+
+    def secondary_control(self, obj, value, *args):
+        if value == 'Shuffle Play':
+            self.player.shuffle(self.screen_manager.current),
+        if value == 'download':
+            print(value, ':', self.screen_manager.current),
+        if value == 'de-download':
+            print(value, ':', self.screen_manager.current)
+
+
+    def control(self, obj, con_type, *args):
+        print(con_type)
 
     def online(self):
         return False
@@ -483,9 +493,6 @@ class MusicPlayer(BoxLayout):
     def push_code(self, obj, value, *args):
         self.player.token = self.spotify_oauth.get_access_token(value)
 
-    def shuffle_songs(self):
-        self.player.shuffle_songs()
-
     def test(self):
         self.player.test()
 
@@ -501,6 +508,7 @@ class TestApp(App):
         b.add_widget(self.music_player)
 
         return b
+
 
 if __name__ == '__main__':
     TestApp().run()

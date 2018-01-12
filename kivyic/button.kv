@@ -1,4 +1,5 @@
-#:import md_icons   kivymd.icon_definitions.md_icons
+#: import md_icons   kivymd.icon_definitions.md_icons
+#: import mat_rsc kivyic.material_resources
 
 <ICBaseButton>:
     color: 1, 1, 1, 1
@@ -32,3 +33,46 @@
             size: self.size
             pos: self.pos
             radius: [self.height / 2]
+
+<ICSwitch>:
+    size_hint: None, None
+    size: '50dp', '24dp'
+    pos_hint: {'center_x': 0.5, 'y': 0}
+    _track_color_active: mat_rsc.IC_BLUE
+    track_width: 24
+    outline_line_width: 1.04
+    outline_color: mat_rsc.IC_GREY
+    outline: True
+    outline_track_width: 24
+    canvas.before:
+
+        Clear
+        Color:
+            rgba: self._track_color_disabled if self.disabled else (self._track_color_active if self.active else self._track_color_normal)
+        Ellipse:
+            size:             dp(self.track_width), dp(self.track_width)
+            pos:            self.x-dp(self.track_width/2), self.center_y - dp(self.track_width/2)
+            angle_start:    180
+            angle_end:        360
+        Rectangle:
+            size:            self.width, dp(self.track_width)
+            pos:            self.x, self.center_y - dp(self.track_width/2)
+        Ellipse:
+            size:            dp(self.track_width), dp(self.track_width)
+            pos:            self.right - dp(self.track_width/2), self.center_y - dp(self.track_width/2)
+            angle_start:    0
+            angle_end:        180
+        Color:
+            rgba: [0,0,0,0] if self.active or not self.outline else self.outline_color
+        Line:
+            circle: (self.x, self.center_y, self.outline_track_width/2, 180, 360)
+            width: self.outline_line_width
+        Line:
+            circle: (self.right , self.center_y, dp(self.outline_track_width/ 2), 0, 180)
+            width: self.outline_line_width
+        Line:
+            points: (self.x, self.center_y - dp(self.outline_track_width/2), self.right, self.center_y - dp(self.outline_track_width/2))
+            width: self.outline_line_width
+        Line:
+            points: (self.x, self.center_y + dp(self.outline_track_width/2), self.right, self.center_y + dp(self.outline_track_width/2))
+            width: self.outline_line_width

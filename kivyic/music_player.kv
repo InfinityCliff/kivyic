@@ -1,6 +1,8 @@
 #: import mat_rsc kivyic.material_resources
 #: import ICRoundedButton kivyic.button.ICRoundedButton
 #: import AlphaScrollPane kivyic.scrollbar.AlphaScrollPane
+#: import MDSwitch kivymd.selectioncontrols.MDSwitch
+#: import ICSwitch kivyic.button.ICSwitch
 
 <MPBaseButton>:
     background_normal: ''
@@ -19,7 +21,7 @@
     color: mat_rsc.SPOTIFY_TEXT if self.state == 'normal' else mat_rsc.SPOTIFY_TEXT_ACTIVE
     canvas.after:
         Color:
-            rgba:[0,1,0,1] if self.state == 'down' else [0,0,0,0]
+            rgba:mat_rsc.SPOTIFY_BRT_GREEN if self.state == 'down' else [0,0,0,0]
         Line:
             points: (self.center_x - self.line_offset_x, self.y + self.line_offset_y, self.center_x + self.line_offset_x, self.y + self.line_offset_y)
             width: 2
@@ -52,23 +54,23 @@
         text: 'SONGS'
         group: 'ContentSelector'
         state: 'down'
-        on_release: root.dispatch('on_header', 'SONGS',  mat_rsc.SPOTIFY_SONGS)
+        on_release: root.dispatch('on_header_control', 'SONGS',  mat_rsc.SPOTIFY_SONGS)
     MPHeaderButton:
         text: 'ALBUMS'
         group: 'ContentSelector'
-        on_release: root.dispatch('on_header', 'ALBUMS', mat_rsc.SPOTIFY_ALBUMS)
+        on_release: root.dispatch('on_header_control', 'ALBUMS', mat_rsc.SPOTIFY_ALBUMS)
     MPHeaderButton:
         text: 'ARTISTS'
         group: 'ContentSelector'
-        on_release: root.dispatch('on_header', 'ARTISTS', mat_rsc.SPOTIFY_ARTISTS)
+        on_release: root.dispatch('on_header_control', 'ARTISTS', mat_rsc.SPOTIFY_ARTISTS)
     MPHeaderButton:
         text: 'PLAYLISTS'
         group: 'ContentSelector'
-        on_release:  root.dispatch('on_header', 'PLAYLISTS', mat_rsc.SPOTIFY_PLAYLISTS)
+        on_release:  root.dispatch('on_header_control', 'PLAYLISTS', mat_rsc.SPOTIFY_PLAYLISTS)
     MPHeaderButton:
         text: 'DAILY MIX'
         group: 'ContentSelector'
-        on_release: root.dispatch('on_header', 'DAILY MIX', mat_rsc.SPOTIFY_DAILY_MIX)
+        on_release: root.dispatch('on_header_control', 'DAILY MIX', mat_rsc.SPOTIFY_DAILY_MIX)
     Label:
         size_hint_y: None
         height: 0
@@ -101,8 +103,6 @@
     SongProgress:
         size_hint_y: None
         height: '25dp'
-
-
 
 <SongView>:
     on_press: self.background_color = 0,0,0,.2
@@ -141,22 +141,6 @@
     song_list: _song_list
     #name: 'SONGS'
     orientation: 'vertical'
-    FloatLayout:
-        size_hint_y: None
-        height: '30dp'
-        ICRoundedButton:
-            size_hint_x: 0.25
-            pos_hint: {'x': 0.05, 'top': 1}
-            text: 'Shuffle Play'
-            background_color_normal: mat_rsc.SPOTIFY_GREEN
-            background_color_down: mat_rsc.SPOTIFY_DARK_GREEN
-        BoxLayout:
-            size_hint_x: 0.3
-            pos_hint: {'right': 1, 'top': 1}
-            Label:
-                text: 'Downloaded'
-            Switch:
-                state: False
     AlphaScrollPane:
         id: _song_list
 
@@ -199,22 +183,6 @@
 <AlbumsScreen>:
     album_list: _album_list
     orientation: 'vertical'
-    FloatLayout:
-        size_hint_y: None
-        height: '30dp'
-        ICRoundedButton:
-            size_hint_x: 0.25
-            pos_hint: {'x': 0.05, 'top': 1}
-            text: 'Shuffle Play'
-            background_color_normal: mat_rsc.SPOTIFY_GREEN
-            background_color_down: mat_rsc.SPOTIFY_DARK_GREEN
-        BoxLayout:
-            size_hint_x: 0.3
-            pos_hint: {'right': 1, 'top': 1}
-            Label:
-                text: 'Downloaded'
-            Switch:
-                state: False
     AlphaScrollPane:
         id: _album_list
 
@@ -257,22 +225,6 @@
 <ArtistsScreen>:
     artist_list: _artist_list
     orientation: 'vertical'
-    FloatLayout:
-        size_hint_y: None
-        height: '30dp'
-        ICRoundedButton:
-            size_hint_x: 0.25
-            pos_hint: {'x': 0.05, 'top': 1}
-            text: 'Shuffle Play'
-            background_color_normal: mat_rsc.SPOTIFY_GREEN
-            background_color_down: mat_rsc.SPOTIFY_DARK_GREEN
-        BoxLayout:
-            size_hint_x: 0.3
-            pos_hint: {'right': 1, 'top': 1}
-            Label:
-                text: 'Downloaded'
-            Switch:
-                state: False
     AlphaScrollPane:
         id: _artist_list
 
@@ -282,9 +234,37 @@
 <DailyMixScreen>:
     name: 'DAILY MIX'
 
+<SecondaryControls>:
+    size_hint_y: None
+    height: '30dp'
+    ICRoundedButton:
+        size_hint_x: 0.25
+        pos_hint: {'x': 0.05, 'top': 1}
+        text: 'Shuffle Play'
+        background_color_normal: mat_rsc.SPOTIFY_GREEN
+        background_color_down: mat_rsc.SPOTIFY_DARK_GREEN
+        on_release: root.dispatch('on_secondary_control', 'Shuffle Play')
+    BoxLayout:
+        size_hint_x: 0.3
+        pos_hint: {'right': 0.96, 'top': 1}
+        Label:
+            id: lbl
+            text: 'Download'
+        ICSwitch:
+            width: '30dp'
+            thumb_color_down: [1,1,1,1]
+            _track_color_active: mat_rsc.SPOTIFY_BRT_GREEN
+            outline_line_width: 1
+            on_active:
+                root.dispatch('on_secondary_control', 'download') if self.active else root.dispatch('on_secondary_control', 'de-download')
+                lbl.text = 'Downloaded' if self.active else 'Download'
+
+
+
 <MusicPlayer>:
     screen_manager: _screen_manager
     controls: _controls
+    secondary_controls: _secondary_controls
     content_selector: _content_selector
     orientation: 'vertical'
     canvas.before:
@@ -295,7 +275,8 @@
             pos: self.pos
     ContentSelector:
         id: _content_selector
-        #pos_hint: {'top': 1}
+    SecondaryControls:
+        id: _secondary_controls
     ScreenManager:
         id: _screen_manager
         Screen:

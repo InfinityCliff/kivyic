@@ -146,7 +146,9 @@
 
 <AlbumView>:
     on_press: self.background_color = 0,0,0,.2
-    on_release: self.background_color = 0,0,0,0
+    on_release:
+        self.background_color = 0,0,0,0
+        self.dispatch('on_play_album', root.album)
     background_color: 0,0,0,0
     size_hint_y: None
     height: self.minimum_height

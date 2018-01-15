@@ -98,7 +98,13 @@ import base64
 
 SCOPE = 'user-library-read'
 
-
+# -------------------------------------------------------------------------------
+# SPOTIFY ON RASPBERRY PI LINKS
+# https://eltechs.com/run-spotify-on-raspberry-pi/
+# https://docs.mopidy.com/en/latest/
+# https://raspberrypi.stackexchange.com/questions/4473/how-to-run-spotify-on-raspberry-pi
+# https://www.raspberrypi.org/forums/viewtopic.php?f=66&t=62537
+# -------------------------------------------------------------------------------
 class SpotifyClient(Library):
 
     client_credentials_manager = None
@@ -187,6 +193,7 @@ class BottleServerInterface(Widget):
     def __init__(self, oauth2, **kwargs):
         super(BottleServerInterface, self).__init__(**kwargs)
         self.server_interface_oauth2 = oauth2
+        self.register_event_type('on_new_code_return')
 
     def bottle_server(self):
         start_bottle_server(callback=self.code_return)
@@ -194,8 +201,11 @@ class BottleServerInterface(Widget):
     def code_return(self, code):
         print('code returned')
         self.code = code
+        self.dispatch('on_new_code_return')
 
-
+    def on_new_code_return(self, *args):
+        print('on_new_code_return')
+        pass
 
 app = Bottle()
 
@@ -233,7 +243,7 @@ def start_bottle_server(callback):
     app.callback = callback
     run(app, host='localhost', port='8080')
 
-    return
+    #return
 
 
 class SongView(ButtonBehavior, AlphaScrollItem):
@@ -268,6 +278,13 @@ class AlbumView(ButtonBehavior, AlphaScrollItem):
     title = StringProperty()
     artist = StringProperty()
     album = StringProperty()
+
+    def __init__(self, **kwargs):
+        super(AlbumView, self).__init__(**kwargs)
+        self.register_event_type('on_play_album')
+
+    def on_play_album(self, *args):
+        pass
 
 
 class AlbumsScreen(BoxLayout):
@@ -396,20 +413,20 @@ class MusicPlayer(BoxLayout):
                                               redirect_uri=SPOTIPY_REDIRECT_URI,
                                               scope=SCOPE)
             self.server_interface = BottleServerInterface(oauth2=self.spotify_oauth)
-            self.server_interface.bind(code=self.push_code)
+            #self.server_interface.bind(code=self.push_code)
 
             self.server = threading.Thread(target=self.start_server)
             self.threads.append(self.server)
             self.server.start()
             print('toast: authorizing....')
             self.prompt_for_user_token()
-            while True:
-                if self.authorized:
-                    break
+            #while True:
+            #    if self.authorized:
+            #        break
 
     def set_bindings(self, *args):
         if internet_online():
-            self.server_interface.bind(on_code=self._new_code)
+            self.server_interface.bind(on_new_code_return=self._new_code)
         self.controls.bind(on_control=self.control)
         self.content_selector.bind(on_header_control=self.header_control)
         self.secondary_controls.bind(on_secondary_control=self.secondary_control)
@@ -437,7 +454,6 @@ class MusicPlayer(BoxLayout):
         print('getting token')
         token = self.spotify_oauth.get_access_token(value)
         print(token)
-        # WORKING HERE - testing to see if code is returned and token recieved
 
     def prompt_for_user_token(self, cache_path=None):
         ''' prompts the user to login if necessary and returns
@@ -490,8 +506,6 @@ class MusicPlayer(BoxLayout):
     def start_server(self):
         self.server_interface.bottle_server()
 
-    def push_code(self, obj, value, *args):
-        self.player.token = self.spotify_oauth.get_access_token(value)
 
     def test(self):
         self.player.test()

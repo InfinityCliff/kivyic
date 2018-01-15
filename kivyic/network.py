@@ -1,5 +1,5 @@
 import socket
-from kivyic import DEBUG_INTERNET
+from kivyic.debug import DEBUG_INTERNET
 
 
 def internet_online(host="8.8.8.8", port=53, timeout=3):

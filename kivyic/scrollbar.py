@@ -1,47 +1,29 @@
+# -*- coding: utf-8 -*-
 # https://github.com/kivy/kivy/wiki/A-draggable-scrollbar-using-a-slider
 
-
-#!python
-import kivy
-
 from kivy.app import App
-#from kivy.lang.builder import Builder
 from kivy.lang import Builder
 from kivy.clock import Clock
 from kivy.metrics import dp, sp
 from kivy.animation import Animation
 
-from kivy.properties import StringProperty, ObjectProperty, NumericProperty, OptionProperty, ReferenceListProperty, \
-                            ListProperty, AliasProperty, DictProperty
-from kivy.uix.button import Button
+from kivy.properties import StringProperty, ObjectProperty, NumericProperty, \
+                            ListProperty, DictProperty, BooleanProperty
 from kivy.uix.label import Label
-from kivy.uix.widget import Widget
-from kivy.uix.slider import Slider
 
-from kivy.uix.relativelayout import RelativeLayout
-from kivy.uix.stacklayout import StackLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.floatlayout import FloatLayout
 
-
-from kivy.uix.popup import Popup
-
 from kivyic import path, alphabet
-from kivyic.debug import dprint
+
 
 from functools import partial
-from operator import itemgetter, attrgetter, methodcaller
 
-import inspect
-
-from kivy.uix.recycleview import RecycleView
 Builder.load_file(path + '/scrollbar.kv')
 
-__all__ = ['AlphaScrollView']
-
+__all__ = ['AlphaScrollPane']
 
 
 class AlphaSBLabel(Label):
@@ -53,7 +35,16 @@ class AlphaSBLabel(Label):
     pass
 
 
-class AlphaSlider(Slider):
+class AlphaSlider(FloatLayout):
+    min = NumericProperty(1)
+    max = NumericProperty(26)
+    step = NumericProperty(1)
+    value_track = BooleanProperty(False)
+    value = NumericProperty(1)
+    value_normalized = NumericProperty()
+    orientation = StringProperty('horizontal')
+    slider = ObjectProperty()
+
     labels = ListProperty()
     '''
     List of labels along the slider
@@ -79,6 +70,7 @@ class AlphaSlider(Slider):
 
     def _post_init(self, *args):
         self.add_labels()
+        self.slider.bind(value=lambda *x: setattr(self, 'value', self.slider.value))
 
     def add_labels(self, *args):
         """
@@ -102,15 +94,6 @@ class AlphaSlider(Slider):
         self.max = l_count
         self.value = l_count
 
-        #print(self.parent.size)
-
-
-        #print('slider height   :', self.height)
-        #print('layout height   :', self.layout.height)
-        #print('layout size     :', self.layout.size)
-        #print('layout min size :', self.layout.minimum_height)
-
-        #print('padding         :', self.padding)
 
 class AlphaScrollViewException(Exception):
     """
@@ -176,8 +159,6 @@ class AlphaScrollItemLabel(AlphaScrollItem):
 
     .. versionadded:: 0.1
     '''
-
-
 
 
 class AlphaScrollItemButton(AlphaScrollItemLabel):
@@ -247,7 +228,6 @@ class AlphaBinView(GridLayout):
 
     def __init__(self, **kwargs):
         super(AlphaBinView, self).__init__(**kwargs)
-        #self.bin_headers = alphabet
         for l in alphabet:
             b = AlphaBin(bin_title=l)
             self.bins[l] = b
@@ -432,7 +412,7 @@ class AlphaScrollView(ScrollView):
             self.scroll_y = syp
 
 
-class AlphaScrollPane(RelativeLayout):
+class AlphaScrollPane(FloatLayout):
     letter = StringProperty()
     '''
     Letter from slider to send to AlphaScrollView for scrolling to
@@ -470,35 +450,27 @@ class AlphaScrollPane(RelativeLayout):
     .. versionadded:: 0.1
     '''
 
-    container = ObjectProperty()
-    '''
-    Pointer to GridLayout that contains the slider and scroll view
-
-    :attr:`container` is an :class:`~kivy.properties.StringProperty` and
-    defaults to ''.
-
-    .. versionadded:: 0.1
-    '''
-
     def __init__(self, **kwargs):
 
         super(AlphaScrollPane, self).__init__(**kwargs)
 
         self.container = GridLayout(rows=1)
-        self.scrollview = AlphaScrollView(size_hint=(0.9, 0.95), content=self.content)
-
-        self.slider = AlphaSlider(min=1, orientation='vertical', step=1, #size_hint=(0.1, 0.95),
-                                  value_track=False, labels=self.scrollview.bin_labels)
+        self.scrollview = AlphaScrollView(content=self.content)
+        self.slider = AlphaSlider(min=1, orientation='vertical', step=1,
+                                  value_track=False, labels=self.scrollview.bin_labels,
+                                  )
 
         self.slider.bind(value=partial(self.scroll_change, self.scrollview))
 
-        self.container.add_widget(self.scrollview)
-        self.container.add_widget(self.slider)
-        self.add_widget(self.container)
+        self.add_widget(self.scrollview)
+        self.add_widget(self.slider)
+
 
     def on_content(self, obj, value, *args):
         if self.scrollview:
             self.scrollview.content = value
+            if self.slider:
+                self.slider.labels = self.scrollview.bin_labels
 
     def on_letter(self, *args):
         self.find_letter()

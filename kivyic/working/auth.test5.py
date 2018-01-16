@@ -12,7 +12,7 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
 import pandas as pd
-
+from tables import *
 import webbrowser
 import threading
 
@@ -81,23 +81,121 @@ class MainWidget(BoxLayout):
                                  client_secret=SPOTIPY_CLIENT_SECRET,
                                  redirect_uri=SPOTIPY_REDIRECT_URI,
                                  scope=SCOPE,
-                                 #cache_path=CACHE,
+                                 cache_path=CACHE,
                                  )
     token = StringProperty()
     track_headers = ['id', 'name', 'album_id', 'artist_id']
     track_list = pd.DataFrame(columns=track_headers)
-    album_headers = ['id', 'name', 'artist_id']
+    album_headers = ['id', 'name', 'artist_id', 'artist_name']
     album_list = pd.DataFrame(columns=album_headers)
+    artist_headers = ['id', 'name']
     artist_list = pd.DataFrame(columns=['id', 'name'])
 
     def __init__(self, **kwargs):
         super(MainWidget, self).__init__(**kwargs)
-        self.start_server()
-        self.start_auth()
-        q.join()
-        token = self.spotify_oauth.get_access_token(q.get())
-
+        token = self.spotify_oauth.get_cached_token()
+        if not token:
+            print('token not found')
+            self.start_server()
+            self.start_auth()
+            q.join()
+            token = self.spotify_oauth.get_access_token(q.get())
+        else:
+            print('token found')
         self.sp = spotipy.Spotify(auth=token['access_token'])
+        print('going to check if data store exists')
+        self.load_data_pickle()
+
+    # TODO - make this a thread as it is slow to load
+    def load_data_pickle(self):
+        for item in ['albums', 'tracks', 'artists']:
+            print('does', item, 'data file exist?')
+            datafilename = '.spotify-album-' + item + '-' + self.username + '.pkl'
+            if os.path.isfile(datafilename):  # yes, load data pickle
+                print('yes, load', item, 'pickle')
+                {'albums': self.album_list,
+                 'tracks': self.track_list,
+                 'artists': self.artist_list
+                 }[item] = pd.read_pickle(datafilename)
+            else:  # no, create data store
+                print('no')
+                self.download_data_from_internet(item)
+
+    def save_data_pickle(self, data):
+        datafilename = '.spotify-album-' + data + '-' + self.username + '.pkl'
+
+        if data == 'albums' and len(self.album_list) > 0:
+            self.album_list.to_pickle(datafilename)
+
+        if data == 'tracks' and len(self.track_list) > 0:
+            self.track_list.to_pickle(datafilename)
+
+        if data == 'artists' and len(self.artist_list) > 0:
+            self.artist_list.to_pickle(datafilename)
+
+    def download_data_from_internet(self, data):
+        if type(data) is str:
+            data = [data]
+        print(data)
+        for d in data:
+            print(d)
+            if d == 'albums':
+                self.download_albums()
+            if d == 'tracks':
+                self.download_tracks()
+            if d == 'artists':
+                self.compile_artists()
+
+# working here to work out how to download/save album trak info and if can save tracks, may not need to withspotify on pi
+    def download_albums(self):
+        print('toast: Downloading Album list for user: ', self.username)
+        album_art = "./album_art/"
+        sa = self.sp.current_user_saved_albums()
+        self.album_list = None
+        self.album_list = pd.DataFrame(columns=self.album_headers)
+        while True:
+            for item in sa['items']:
+                album = item['album']
+                self.album_list.loc[len(self.album_list)] = [album['id'], album['name'],
+                                                             album['artists'][0]['id'],
+                                                             album['artists'][0]['name']]
+
+                name = album['id'] + '.jpeg'
+                if not os.path.isfile(album_art + name):
+                    url = album['images'][1]['url']
+                    urllib.request.urlretrieve(url, album_art + name)
+            if sa['next']:
+                sa = self.sp._get(sa['next'])
+            else:
+                break
+
+        self.album_list.set_index('id', inplace=True)
+        self.save_data_pickle('albums')
+
+    def download_tracks(self):
+        print('toast: Downloading Track list for user: ', self.username)
+        st = self.sp.current_user_saved_tracks()
+        self.track_list = None
+        self.track_list = pd.DataFrame(columns=self.track_headers)
+        while True:
+            for item in st['items']:
+                track = item['track']
+                self.track_list.loc[len(self.track_list)] = [track['id'], track['name'],
+                                                             track['album']['id'],
+                                                             track['artists'][0]['id']]
+
+            if st['next']:
+                st = self.sp._get(st['next'])
+            else:
+                break
+        self.track_list.set_index('id', inplace=True)
+        self.save_data_pickle('artists')
+
+    def compile_artists(self):
+        print('toast: Compiling artist list for user: ', self.username)
+        # working here  - to build artist list from album list, need to remove index from album list
+        self.artist_list = self.album_list[['artist_id', 'artist_name']]
+        print(self.artist_list.head())
 
     @staticmethod
     def start_server():
@@ -112,42 +210,6 @@ class MainWidget(BoxLayout):
         self.save_created_state(state)
         auth_url = self.spotify_oauth.get_authorize_url()  # TODO when set up simply add --> state=state)
         webbrowser.open(auth_url)
-
-# working here to work out how to download/save album trak info and if can save tracks, may not need to withspotify on pi
-    def saved_albums(self):
-        album_art = "./album_art/"
-        sa = self.sp.current_user_saved_albums()
-
-        while True:
-            for item in sa['items']:
-                album = item['album']
-                self.album_list.loc[len(self.album_list)] = [album['id'], album['name'], album['artists'][0]['name']]
-
-                name = album['id'] + '.jpeg'
-                if not os.path.isfile(album_art + name):
-                    url = album['images'][1]['url']
-                    urllib.request.urlretrieve(url, album_art + name)
-            if sa['next']:
-                sa = self.sp._get(sa['next'])
-            else:
-                break
-
-        self.album_list.set_index('id', inplace=True)
-        print(self.album_list.head())
-
-    def saved_tracks(self):
-        st = self.sp.current_user_saved_tracks()
-        print(st.keys())
-        for item in st['items']:
-            print(item['track'].keys())
-            print()
-            print(item['track']['name'])
-            print(item['track']['album']['name'])
-            print(item['track']['artists'][0]['name'])
-            print()
-            print(item['track']['album']['album_art'][1]['url'])
-            print('---------------------------------------------------------')
-
 
     def save_created_state(self, state):
         pass

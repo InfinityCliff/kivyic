@@ -86,19 +86,21 @@
         Label:
         MPIconButton:
             icon: 'shuffle-variant'
-            on_press: root.dispatch('on_control', 'shuffle')
+            color: mat_rsc.SPOTIFY_LT_GREY if root.shuffle_color is [] else root.shuffle_color
+            on_press: root.dispatch('on_control', 'shuffle', not root.shuffle_state)
         MPIconButton:
             icon: 'skip-previous'
             on_press: root.dispatch('on_control', 'previous')
         MPIconButton:
-            icon: 'play-circle-outline'
-            on_press: root.dispatch('on_control', 'play')
+            icon: root.play_pause_icon
+            on_press: root.dispatch('on_control', 'pause') if root.is_playing else root.dispatch('on_control','play')
         MPIconButton:
             icon: 'skip-next'
             on_press: root.dispatch('on_control', 'next')
         MPIconButton:
             icon: 'repeat'
-            on_press: root.dispatch('on_control', 'repeat')
+            color: mat_rsc.SPOTIFY_LT_GREY if root.repeat_color is [] else root.repeat_color
+            on_press: root.dispatch('on_control', 'repeat', root.next_repeat_state())
         Label:
     SongProgress:
         size_hint_y: None
@@ -131,6 +133,7 @@
             text: root.artist + '  *  ' + root.album
             color: mat_rsc.SPOTIFY_LT_GREY
             size_hint: None, None
+            font_size: 12
             size: self.texture_size
     MPIconButton:
         icon: 'dots-horizontal'
@@ -139,7 +142,6 @@
 
 <SongsScreen>:
     song_list: _song_list
-    #name: 'SONGS'
     orientation: 'vertical'
     AlphaScrollPane:
         id: _song_list
@@ -158,17 +160,19 @@
         Rectangle:
             size: self.size
             pos: self.pos
-    Label:
-        text: 'img'
+    BoxLayout:
+        padding: 2
         size_hint_x: None
-        width: root.height
+        width: '50dp'
+        Image:
+            source: None if root.cover_art == '' else root.cover_art
     BoxLayout:
         cols: 1
         orientation: 'vertical'
         size_hint_y: None
         height: self.minimum_height
         Label:
-            text: '[b]' + root.album + '[/b]'
+            text: '[b]' + root.title + '[/b]'
             markup: True
             size_hint: None, None
             size: self.texture_size
@@ -176,6 +180,7 @@
             text: root.artist
             color: mat_rsc.SPOTIFY_LT_GREY
             size_hint: None, None
+            font_size: 12
             size: self.texture_size
     MPIconButton:
         icon: 'chevron-right'
@@ -215,10 +220,12 @@
             size_hint: None, None
             size: self.texture_size
         Label:
-            text: 'song count'
+            text: str(root.song_count) + ' songs - ' + str(root.album_count) + ' albums'
             color: mat_rsc.SPOTIFY_LT_GREY
             size_hint: None, None
+            font_size: 12
             size: self.texture_size
+
     MPIconButton:
         icon: 'chevron-right'
         size_hint_x: None
@@ -230,8 +237,50 @@
     AlphaScrollPane:
         id: _artist_list
 
+<PlayListView>:
+    on_press: self.background_color = 0,0,0,.2
+    on_release: self.background_color = 0,0,0,0
+    background_color: 0,0,0,0
+    size_hint_y: None
+    height: self.minimum_height
+    canvas.before:
+        Color:
+            rgba: self.background_color
+        Rectangle:
+            size: self.size
+            pos: self.pos
+    BoxLayout:
+        padding: 2
+        size_hint_x: None
+        width: '50dp'
+        Image:
+            source: None if root.play_list_art == '' else root.play_list_art
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint_y: None
+        height: self.minimum_height
+        Label:
+            text: '[b]' + root.play_list_name + '[/b]'
+            markup: True
+            size_hint: None, None
+            size: self.texture_size
+        Label:
+            text: str(root.song_count) + ' songs'
+            color: mat_rsc.SPOTIFY_LT_GREY
+            size_hint: None, None
+            font_size: 12
+            size: self.texture_size
+
+    MPIconButton:
+        icon: 'chevron-right'
+        size_hint_x: None
+        width: root.height
+
 <PlayListsScreen>:
-    name: 'PLAYLISTS'
+    play_list: _play_list
+    orientation: 'vertical'
+    AlphaScrollPane:
+        id: _play_list
 
 <DailyMixScreen>:
     name: 'DAILY MIX'
@@ -284,15 +333,19 @@
         Screen:
             name: 'SONGS'
             SongsScreen:
+                content: root.player.track_list.to_dict(orient='records')
         Screen:
             name: 'ALBUMS'
             AlbumsScreen:
+                content: root.player.album_list.to_dict(orient='records')
         Screen:
             name: 'ARTISTS'
             ArtistsScreen:
+                content: root.player.artist_list.to_dict(orient='records')
         Screen:
             name: 'PLAYLISTS'
             PlayListsScreen:
+                content: root.player.play_list.to_dict(orient='records')
         Screen:
             name: 'DAILY MIX'
             DailyMixScreen:

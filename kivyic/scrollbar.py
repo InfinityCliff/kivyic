@@ -37,7 +37,7 @@ class AlphaSBLabel(Label):
 
 class AlphaSlider(FloatLayout):
     min = NumericProperty(1)
-    max = NumericProperty(26)
+    max = NumericProperty(27)
     step = NumericProperty(1)
     value_track = BooleanProperty(False)
     value = NumericProperty(1)
@@ -228,7 +228,8 @@ class AlphaBinView(GridLayout):
 
     def __init__(self, **kwargs):
         super(AlphaBinView, self).__init__(**kwargs)
-        for l in alphabet:
+        bin_header = ['#'] + alphabet
+        for l in bin_header:
             b = AlphaBin(bin_title=l)
             self.bins[l] = b
             self.add_widget(b)
@@ -242,6 +243,8 @@ class AlphaBinView(GridLayout):
     def add_widget(self, widget, index=0):
         if isinstance(widget, dict):
             letter = widget[self.sort_key][0]
+            if letter not in alphabet:
+                letter = '#'
             # create bin item and add to respective bin and append to item list
             self.bins[letter].sort_key = self.sort_key
             self.bins[letter].add_widget(widget)
@@ -505,7 +508,7 @@ class AlphaScrollPane(FloatLayout):
             # this to avoid 'maximum recursion depth exceeded' error
             s.value = value
 
-
+# TOFIX -
 class ScrollApp(App):
     asp = ObjectProperty
 
@@ -520,7 +523,8 @@ class ScrollApp(App):
         self.asp.add_widget({'text': 'A7', 'view_class': AlphaScrollItemButton})
         self.asp.add_widget({'text': 'A6', 'view_class': AlphaScrollItemButton})
         self.asp.add_widget({'text': 'A6', 'view_class': AlphaScrollItemButton})
-
+        self.asp.add_widget({'text': '#1', 'view_class': AlphaScrollItemButton})
+        self.asp.add_widget({'text': '!2', 'view_class': AlphaScrollItemButton})
         b.add_widget(self.asp)
         return b
 

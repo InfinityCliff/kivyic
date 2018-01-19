@@ -103,50 +103,47 @@ class MainWidget(BoxLayout):
         else:
             print('token found')
         self.sp = spotipy.Spotify(auth=token['access_token'])
-        print('going to check if data store exists')
+        #print('going to check if data store exists')
         self.load_data_pickle()
 
     # TODO - make this a thread as it is slow to load
     def load_data_pickle(self):
-        for item in ['albums', 'tracks', 'artists']:
-            print('does', item, 'data file exist?')
-            datafilename = '.spotify-album-' + item + '-' + self.username + '.pkl'
-            if os.path.isfile(datafilename):  # yes, load data pickle
-                print('yes, load', item, 'pickle')
-                {'albums': self.album_list,
-                 'tracks': self.track_list,
-                 'artists': self.artist_list
-                 }[item] = pd.read_pickle(datafilename)
-            else:  # no, create data store
-                print('no')
-                self.download_data_from_internet(item)
+        data_filename = '.spotify-albums-' + self.username + '.pkl'
+        if os.path.isfile(data_filename):  # yes, load data pickle
+            #print('yes, load albums pickle')
+            self.album_list = pd.read_pickle(data_filename)
+            #self.album_list.set_index('id', inplace=True)
+            #print('---------------------------------')
+        else:
+            self.download_albums()
 
-    def save_data_pickle(self, data):
-        datafilename = '.spotify-album-' + data + '-' + self.username + '.pkl'
+        data_filename = '.spotify-tracks-' + self.username + '.pkl'
+        if os.path.isfile(data_filename):  # yes, load data pickle
+            #print('yes, load tracks pickle')
+            self.track_list = pd.read_pickle(data_filename)
+            #self.track_list.set_index('id', inplace=True)
+            #print('---------------------------------')
+        else:
+            self.download_tracks()
 
-        if data == 'albums' and len(self.album_list) > 0:
-            self.album_list.to_pickle(datafilename)
+        data_filename = '.spotify-artists-' + self.username + '.pkl'
+        if os.path.isfile(data_filename):  # yes, load data pickle
+            #print('yes, load artists pickle')
+            self.artist_list = pd.read_pickle(data_filename)
+            #self.artist_list.set_index('id', inplace=True)
+            #print('---------------------------------')
+        else:
+            self.compile_artists()
 
-        if data == 'tracks' and len(self.track_list) > 0:
-            self.track_list.to_pickle(datafilename)
+        print(self.album_list.head())
+        print(self.track_list.head())
+        print(self.artist_list.head())
 
-        if data == 'artists' and len(self.artist_list) > 0:
-            self.artist_list.to_pickle(datafilename)
+    def save_data_pickle(self, list_name, data_list):
+        #print('saving', list_name, 'to pickle')
+        data_filename = '.spotify-' + list_name + '-' + self.username + '.pkl'
+        data_list.to_pickle(data_filename)
 
-    def download_data_from_internet(self, data):
-        if type(data) is str:
-            data = [data]
-        print(data)
-        for d in data:
-            print(d)
-            if d == 'albums':
-                self.download_albums()
-            if d == 'tracks':
-                self.download_tracks()
-            if d == 'artists':
-                self.compile_artists()
-
-# working here to work out how to download/save album trak info and if can save tracks, may not need to withspotify on pi
     def download_albums(self):
         print('toast: Downloading Album list for user: ', self.username)
         album_art = "./album_art/"
@@ -170,7 +167,7 @@ class MainWidget(BoxLayout):
                 break
 
         self.album_list.set_index('id', inplace=True)
-        self.save_data_pickle('albums')
+        self.save_data_pickle('albums', self.album_list)
 
     def download_tracks(self):
         print('toast: Downloading Track list for user: ', self.username)
@@ -189,13 +186,18 @@ class MainWidget(BoxLayout):
             else:
                 break
         self.track_list.set_index('id', inplace=True)
-        self.save_data_pickle('artists')
+        self.save_data_pickle('tracks', self.track_list)
 
     def compile_artists(self):
-        print('toast: Compiling artist list for user: ', self.username)
-        # working here  - to build artist list from album list, need to remove index from album list
-        self.artist_list = self.album_list[['artist_id', 'artist_name']]
-        print(self.artist_list.head())
+        print('toast: Compiling Track list for user: ', self.username)
+        self.artist_list = self.album_list[['artist_id', 'artist_name']].copy()
+        self.artist_list.reset_index(inplace=True)
+        self.artist_list.drop(columns=['id'], inplace=True)
+        self.artist_list.columns = ['id', 'artist_name']
+        self.artist_list.drop_duplicates(subset='id', inplace=True)
+        self.artist_list.set_index('id', inplace=True)
+
+        self.save_data_pickle('artists', self.artist_list)
 
     @staticmethod
     def start_server():

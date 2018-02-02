@@ -17,13 +17,13 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 
 from kivyic import path, alphabet
-
+from kivyic.debug import dprint
 
 from functools import partial
 
 Builder.load_file(path + '/scrollbar.kv')
 
-__all__ = ['AlphaScrollPane']
+__all__ = ['AlphaScrollPane', 'AlphaScrollItem']
 
 
 class AlphaSBLabel(Label):
@@ -235,10 +235,12 @@ class AlphaBinView(GridLayout):
             self.add_widget(b)
 
     def on_content(self, obj, new_content):
+        dprint('start')
         if new_content:
             self.sort_key = new_content['sort_key']
             for item in new_content['attributes']:
                 self.add_widget(item)
+        dprint('end')
 
     def add_widget(self, widget, index=0):
         if isinstance(widget, dict):

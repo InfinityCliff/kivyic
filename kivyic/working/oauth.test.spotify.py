@@ -108,6 +108,7 @@ class MainWidget(BoxLayout):
 
     # TODO - make this a thread as it is slow to load
     def load_data_pickle(self):
+
         data_filename = '.spotify-albums-' + self.username + '.pkl'
         if os.path.isfile(data_filename):  # yes, load data pickle
             #print('yes, load albums pickle')

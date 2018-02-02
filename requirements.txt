@@ -1,0 +1,5 @@
+kivy
+pandas
+kivymd
+spotipy
+bottle

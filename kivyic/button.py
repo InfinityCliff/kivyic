@@ -34,16 +34,16 @@ class ICRoundedButton(ICBaseButton):
     pass
 
 
-class ICMultiStateButton(ICIconButton):
-    states = ListProperty()
-    _state = 0
-    state = StringProperty()
+class ICMultiPositionButton(ICIconButton):
+    positions = ListProperty()
+    _position = 0
+    position = StringProperty()
 
     def on_press(self):
-        if self._state == len(self.states) - 1:
-            self._state = -1
-        self._state += 1
-        self.state = self.states(self._state)
+        if self._position == len(self.positions) - 1:
+            self._position = -1
+        self._position += 1
+        self.position = self.positions[self._position]
         super().on_press()
 
 
@@ -75,7 +75,7 @@ class ButtonTestApp(App):
                               outline=False
                              ))
         b.add_widget(Switch())
-        b.add_widget(ICMultiStateButton(states=['0', '1', '2']))
+        b.add_widget(ICMultiPositionButton(states=['0', '1', '2']))
         return b
 
 

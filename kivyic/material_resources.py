@@ -26,9 +26,11 @@ else:
 # =====================================================================================
 SPOTIFY_GREY =          ColorProperty([40,   40,  40, 1])
 SPOTIFY_LT_GREY =       ColorProperty([146, 154, 171, 1])
-SPOTIFY_GREEN =         ColorProperty([29,  185,  84, 1])
+SPOTIFY_WHITE =         ColorProperty([255, 255, 255, 1])
+SPOTIFY_BLACK =         ColorProperty([25,   20,  20, 1])
+SPOTIFY_GREEN =         ColorProperty([30,  215,  96, 1])
 SPOTIFY_BRT_GREEN =     ColorProperty([0,   255,   0, 1])
-SPOTIFY_DARK_GREEN =    ColorProperty([29,  185,  84, .5])
+SPOTIFY_DARK_GREEN =    ColorProperty([30,  215,  96, .5])
 SPOTIFY_TEXT =          ColorProperty([165, 160, 149, 1])
 SPOTIFY_TEXT_ACTIVE =   ColorProperty([255, 255, 255, 1])
 SPOTIFY_BUTTON =        ColorProperty([167, 167, 167, 1])

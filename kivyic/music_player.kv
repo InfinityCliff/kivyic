@@ -3,6 +3,7 @@
 #: import AlphaScrollPane kivyic.scrollbar.AlphaScrollPane
 #: import MDSwitch kivymd.selectioncontrols.MDSwitch
 #: import ICSwitch kivyic.button.ICSwitch
+#: import ICMultiPositionButton kivyic.button.ICMultiPositionButton
 
 <MPBaseButton>:
     background_normal: ''
@@ -86,21 +87,23 @@
         Label:
         MPIconButton:
             icon: 'shuffle-variant'
-            color: mat_rsc.SPOTIFY_LT_GREY if root.shuffle_color is [] else root.shuffle_color
+            color: root.shuffle_color    #mat_rsc.SPOTIFY_LT_GREY if root.shuffle_color is [] else root.shuffle_color
             on_press: root.dispatch('on_control', 'shuffle', not root.shuffle_state)
         MPIconButton:
             icon: 'skip-previous'
             on_press: root.dispatch('on_control', 'previous')
         MPIconButton:
             icon: root.play_pause_icon
-            on_press: root.dispatch('on_control', 'pause') if root.is_playing else root.dispatch('on_control','play')
+            on_press: root.dispatch('on_control', 'pause', root.is_playing) if root.is_playing else root.dispatch('on_control', 'play', root.is_playing)
         MPIconButton:
             icon: 'skip-next'
             on_press: root.dispatch('on_control', 'next')
-        MPIconButton:
+        ICMultiPositionButton:
             icon: 'repeat'
-            color: mat_rsc.SPOTIFY_LT_GREY if root.repeat_color is [] else root.repeat_color
-            on_press: root.dispatch('on_control', 'repeat', root.next_repeat_state())
+            positions: ['off', 'track', 'context']
+            position: 'off'
+            color: root.repeat_color  #mat_rsc.SPOTIFY_LT_GREY if root.repeat_color is [] else root.repeat_color
+            on_press: root.dispatch('on_control', 'repeat', self.position)
         Label:
     SongProgress:
         size_hint_y: None
@@ -108,7 +111,9 @@
 
 <SongView>:
     on_press: self.background_color = 0,0,0,.2
-    on_release: self.background_color = 0,0,0,0
+    on_release:
+        self.background_color = 0,0,0,0
+        self.callback('track', self.track_id, self.title)
     background_color: 0,0,0,0
     size_hint_y: None
     height: self.minimum_height
@@ -150,7 +155,7 @@
     on_press: self.background_color = 0,0,0,.2
     on_release:
         self.background_color = 0,0,0,0
-        self.dispatch('on_play_album', root.album)
+        self.callback('album', self.album_id, self.title)
     background_color: 0,0,0,0
     size_hint_y: None
     height: self.minimum_height
@@ -239,7 +244,9 @@
 
 <PlayListView>:
     on_press: self.background_color = 0,0,0,.2
-    on_release: self.background_color = 0,0,0,0
+    on_release:
+        self.background_color = 0,0,0,0
+        self.callback('playlist', self.play_list_id, self.play_list_id)
     background_color: 0,0,0,0
     size_hint_y: None
     height: self.minimum_height
@@ -283,7 +290,24 @@
         id: _play_list
 
 <DailyMixScreen>:
-    name: 'DAILY MIX'
+
+
+<NowPlayingScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        Button:
+            text: 'Play Album'
+        BoxLayout:
+            BoxLayout:
+                orientation: 'vertical'
+                Image:
+                    source: root.cover
+                Label:
+                    text: root.track
+                Label:
+                    text: root.album + ' * ' + root.artist
+        Label:
+            text: 'TRACKS'
 
 <SecondaryControls>:
     size_hint_y: None
@@ -330,25 +354,27 @@
         id: _secondary_controls
     ScreenManager:
         id: _screen_manager
-        Screen:
+        SongsScreen:
             name: 'SONGS'
-            SongsScreen:
-                content: root.player.track_list.to_dict(orient='records')
-        Screen:
+            play_callback: root.player.play
+            content: root.player.track_list.to_dict(orient='records')
+        AlbumsScreen:
             name: 'ALBUMS'
-            AlbumsScreen:
-                content: root.player.album_list.to_dict(orient='records')
-        Screen:
+            play_callback: root.player.play
+            content: root.player.album_list.to_dict(orient='records')
+        ArtistsScreen:
             name: 'ARTISTS'
-            ArtistsScreen:
-                content: root.player.artist_list.to_dict(orient='records')
-        Screen:
+            play_callback: root.player.play
+            content: root.player.artist_list.to_dict(orient='records')
+        PlayListsScreen:
             name: 'PLAYLISTS'
-            PlayListsScreen:
-                content: root.player.play_list.to_dict(orient='records')
-        Screen:
+            play_callback: root.player.play
+            content: root.player.play_list.to_dict(orient='records')
+        DailyMixScreen:
             name: 'DAILY MIX'
-            DailyMixScreen:
+            play_callback: root.player.play
+        NowPlayingScreen:
+            name: 'NOW PLAYING'
     Controls:
         id: _controls
         canvas.before:

@@ -16,7 +16,7 @@ from itertools import compress
 from functools import partial
 
 import inspect
-
+from pprint import pprint
 
 __all__ = ['dprint', 'CanvasFill']
 __version__ = '0.0'
@@ -25,7 +25,7 @@ DEBUG = False
 DEBUG_INTERNET = False
 
 
-def dprint(depth, *args):
+def dprint2(depth, *args):
     for d in range(1, depth + 1):
         stack = inspect.stack()[d]
         if '/' in stack[1]:
@@ -33,6 +33,40 @@ def dprint(depth, *args):
         if '\\' in stack[1]:
             spl = '\\'
         print('[' + stack[3] + '\t]\t', stack[2], ': ', stack[1].split(spl)[-1])
+
+
+def dprint(*args):
+    # GO-BY TEMPLATE
+    # File "J:/python/prj/kivyic/kivyic/music_player.py", line 5, in <module>
+    #   from kivyic.network import internet_online
+    # File "J:\python\prj\kivyic\kivyic\network.py", line 2, in <module>
+    #   from kivyic.debug import DEBUG_INTERNET
+    # File "J:\python\prj\kivyic\kivyic\debug.py", line 39
+    #   pprint(inspect.stack()[2])
+
+    # pprint(inspect.stack()[2])
+    # pprint(inspect.stack()[1])
+
+    if DEBUG:
+        func_file = inspect.stack()[1][1].split('/')[-1]
+        func = inspect.stack()[1][3]
+        func_line = inspect.stack()[1][2]
+        print("[{0}] [{2}] line {1}".format(func.ljust(35),
+                                            str(func_line).ljust(2),
+                                            func_file.ljust(20)))
+
+        caller = inspect.stack()[2][4][0].lstrip().rstrip()
+        caller = caller.split(' = ')[0]
+        caller_line = inspect.stack()[2][2]
+        caller_file = inspect.stack()[2][1].split('/')[-1]
+        print("  [{0}] [{2}] line {1}".format(caller.ljust(33),
+                                              str(caller_line).ljust(2),
+                                              caller_file.ljust(20)))
+
+        for arg in args:
+            print("  :{}".format(arg))
+        print()
+
 
 
 class CanvasFill(Widget):
@@ -140,12 +174,14 @@ class DebugTestApp(App):
     asp = ObjectProperty
 
     def build(self):
+        dprint('start')
         b = BoxLayout()
 
         b.add_widget(_CanvasLabel(when='before', fill_color='white'))
         b.add_widget(_CanvasBox(when='after', fill_color='blue'))
         b.add_widget(_CanvasBox(when='after', fill_color='red'))
         b.add_widget(_CanvasLabel(when='before', fill_color='orange'))
+        dprint('end')
         return b
 
 
